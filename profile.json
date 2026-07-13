@@ -84,8 +84,8 @@
     "handshake": "https://app.joinhandshake.com/"
   },
   "documents": {
-    "resume_path": "C:\Users\ttamb\Downloads\Tarun_Ambati_Resume.pdf",
-    "transcript_path": "C:\Users\ttamb\Downloads\Tarun_Ambati_Transcript.pdf"
+    "resume_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Resume.pdf",
+    "transcript_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Transcript.pdf"
   },
   "constraints": {
     "needs_sponsorship": false,
