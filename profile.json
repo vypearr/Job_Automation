@@ -84,8 +84,8 @@
     "handshake": "https://app.joinhandshake.com/"
   },
   "documents": {
-    "resume_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Resume.pdf",
-    "transcript_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Transcript.pdf"
+    "resume_path": "C:\Users\ttamb\Downloads\Tarun_Ambati_Resume.pdf",
+    "transcript_path": "C:\Users\ttamb\Downloads\Tarun_Ambati_Transcript.pdf"
   },
   "constraints": {
     "needs_sponsorship": false,
@@ -93,8 +93,8 @@
     "application_strategy": "volume",
     "primary_platform": "handshake",
     "high_confidence_action": "full_submit",
-    "daily_application_target_min": 5,
-    "daily_application_target_max": 10,
+    "daily_application_target_min": 15,
+    "daily_application_target_max": 15,
     "application_order": "highest_confidence_first",
     "only_new_postings": true,
     "skip_cover_letter_required": true,
