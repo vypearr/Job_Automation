@@ -105,7 +105,7 @@ The current profile is configured for:
 - primary platform: `handshake`
 - high-confidence action: `full_submit`
 - strategy: `volume`
-- daily target: `5-10` applications
+- daily target: `15` applications
 - skip jobs requiring a cover letter
 - transcript path stored for transcript-required roles
 
@@ -118,7 +118,7 @@ Some job sites restrict fully automated applications. This project is designed s
 The repo now includes `render.yaml` for:
 
 - one web service for the API
-- one cron service for the daily runner
+- one cron service for the recurring runner
 
 The current cron runner processes a configured jobs file and persists decisions. It does not yet perform full cloud-native browser login automation for Handshake or LinkedIn.
 
@@ -141,7 +141,7 @@ The intended steady-state behavior is:
 - score for robotics, embedded, firmware, and mechatronics fit
 - skip roles requiring a cover letter
 - allow resume-only and resume-plus-transcript flows
-- auto-submit high-confidence jobs until the daily count reaches `5` to `10`
+- auto-submit high-confidence jobs until the daily count reaches `15`
 - write tracked jobs into the `Applied` sheet layout
 - mark successfully submitted jobs with status `applied`
 
