@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from .cloud_service import CloudAutomationService
+from .tracking_sync import sync_tracking_rows
 
 
 def main() -> None:
@@ -14,6 +15,7 @@ def main() -> None:
 
     service = CloudAutomationService(base_dir)
     result = service.process_jobs_file(jobs_file, mark_applied=mark_applied)
+    result["tracking_sync"] = sync_tracking_rows(result)
     print(json.dumps(result, indent=2))
 
 
