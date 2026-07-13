@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+data/state.json
+tracking_export.csv
+handshake_tracking.csv
+handshake_selected_tracking.csv
+handshake_imported.json
+*.log

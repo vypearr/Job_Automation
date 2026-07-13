@@ -1,0 +1,114 @@
+{
+  "name": "Tarunreddy Ambati",
+  "email": "ttambi7@gmail.com",
+  "phone": "(669) 237-5783",
+  "school": "San Francisco State University",
+  "major": "Computer Engineering",
+  "degree": "BS",
+  "graduation": "2027-05",
+  "gpa": 3.9,
+  "target_domains": [
+    "robotics",
+    "embedded systems",
+    "firmware",
+    "controls",
+    "autonomy",
+    "mechatronics"
+  ],
+  "preferred_titles": [
+    "Robotics Engineer Intern",
+    "Embedded Software Intern",
+    "Firmware Intern",
+    "Controls Intern",
+    "Systems Engineer Intern",
+    "Hardware Software Integration Intern"
+  ],
+  "skills": {
+    "languages": [
+      "C",
+      "Python",
+      "Java",
+      "JavaScript",
+      "Bash",
+      "Shell Scripting"
+    ],
+    "robotics": [
+      "teleoperation",
+      "robot bring-up",
+      "sensor calibration",
+      "joint validation",
+      "torque limits",
+      "humanoid robots",
+      "quadrupeds",
+      "drones"
+    ],
+    "embedded": [
+      "STM32",
+      "STM32CubeIDE",
+      "Arduino",
+      "microcontrollers",
+      "PCB Design",
+      "KiCad",
+      "circuits",
+      "LTSpice",
+      "PSpice"
+    ],
+    "software": [
+      "Next.js",
+      "React",
+      "ServiceNow",
+      "Salesforce",
+      "GitHub",
+      "Linux"
+    ]
+  },
+  "coursework": [
+    "C Programming",
+    "Unix and Linux Operating Systems",
+    "Python Programming",
+    "Electric Circuits Analysis",
+    "Signals and Systems Analysis",
+    "Microcontrollers",
+    "PCB Design"
+  ],
+  "experience_highlights": [
+    "Robotics Engineer Intern at Skylark Labs",
+    "Calibrated teleoperation sensors across Unitree humanoids, quadrupeds, and drones",
+    "Assembled and validated electromechanical subsystems",
+    "Built STM32 and Arduino projects with hardware-software integration",
+    "Built production software systems in startup environments"
+  ],
+  "links": {
+    "linkedin": "",
+    "github": "https://github.com/vypearr",
+    "handshake": "https://app.joinhandshake.com/"
+  },
+  "documents": {
+    "resume_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Resume.pdf",
+    "transcript_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Transcript.pdf"
+  },
+  "constraints": {
+    "needs_sponsorship": false,
+    "open_to_relocation": true,
+    "application_strategy": "volume",
+    "primary_platform": "handshake",
+    "high_confidence_action": "full_submit",
+    "daily_application_target_min": 5,
+    "daily_application_target_max": 10,
+    "application_order": "highest_confidence_first",
+    "only_new_postings": true,
+    "skip_cover_letter_required": true,
+    "external_apply_action": "applied_sheet_checkin_review",
+    "applied_status_value": "applied",
+    "allowed_required_documents": [
+      "resume",
+      "transcript"
+    ],
+    "platform_session_required": true,
+    "preferred_locations": [
+      "San Francisco Bay Area",
+      "California",
+      "Remote"
+    ]
+  }
+}

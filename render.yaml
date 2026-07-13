@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: robotics-job-agent
+    env: docker
+    rootDir: work/robotics-job-agent
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: JOB_AGENT_PROFILE_PATH
+        value: /app/profile.json
+      - key: JOB_AGENT_STATE_PATH
+        value: /app/data/state.json
+
+  - type: cron
+    name: robotics-job-agent-daily
+    env: docker
+    rootDir: work/robotics-job-agent
+    plan: starter
+    schedule: "0 16 * * *"
+    dockerCommand: python -m job_agent.daily_run
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: JOB_AGENT_PROFILE_PATH
+        value: /app/profile.json
+      - key: JOB_AGENT_STATE_PATH
+        value: /app/data/state.json
