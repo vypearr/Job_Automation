@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
@@ -15,8 +16,10 @@ from .tracking import build_sheet_row_map, build_tracking_row
 class CloudAutomationService:
     def __init__(self, base_dir: str | Path) -> None:
         self.base_dir = Path(base_dir)
-        self.profile_path = self.base_dir / "profile.json"
-        self.state_store = JsonStateStore(self.base_dir / "data" / "state.json")
+        profile_path = os.getenv("JOB_AGENT_PROFILE_PATH")
+        state_path = os.getenv("JOB_AGENT_STATE_PATH")
+        self.profile_path = Path(profile_path) if profile_path else self.base_dir / "profile.json"
+        self.state_store = JsonStateStore(Path(state_path) if state_path else self.base_dir / "data" / "state.json")
 
     def load_profile(self) -> CandidateProfile:
         return load_profile(self.profile_path)
