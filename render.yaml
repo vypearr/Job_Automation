@@ -14,11 +14,11 @@ services:
         value: /app/data/state.json
 
   - type: cron
-    name: robotics-job-agent-daily
+    name: robotics-job-agent-runner
     env: docker
     rootDir: work/robotics-job-agent
     plan: starter
-    schedule: "0 16 * * *"
+    schedule: "0 16,0 * * *"
     dockerCommand: python -m job_agent.daily_run
     envVars:
       - key: PYTHONUNBUFFERED
