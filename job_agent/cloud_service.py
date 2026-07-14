@@ -128,4 +128,6 @@ class CloudAutomationService:
         execute_submissions: bool = False,
     ) -> dict:
         jobs = load_jobs(jobs_path)
-        return self.process_jobs(jobs, mark_applied=mark_applied, execute_submissions=execute_submissions)
+        result = self.process_jobs(jobs, mark_applied=mark_applied, execute_submissions=execute_submissions)
+        result["jobs_path"] = str(jobs_path)
+        return result
