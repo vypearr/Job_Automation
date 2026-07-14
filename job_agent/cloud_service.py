@@ -5,9 +5,11 @@ from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
+from .apply_pipeline import GenericHostedAdapter, HandshakeAdapter, IndeedAdapter, LinkedInAdapter
 from .cloud_store import JsonStateStore, append_run, upsert_job
 from .ingest import load_jobs
 from .models import CandidateProfile, JobPosting
+from .platforms import select_adapter_for_job
 from .profile_loader import load_profile
 from .scoring import score_job
 from .tracking import build_sheet_row_map, build_tracking_row
@@ -20,6 +22,12 @@ class CloudAutomationService:
         state_path = os.getenv("JOB_AGENT_STATE_PATH")
         self.profile_path = Path(profile_path) if profile_path else self.base_dir / "profile.json"
         self.state_store = JsonStateStore(Path(state_path) if state_path else self.base_dir / "data" / "state.json")
+        self.adapters = {
+            "handshake": HandshakeAdapter(),
+            "linkedin": LinkedInAdapter(),
+            "indeed": IndeedAdapter(),
+            "generic_hosted": GenericHostedAdapter(),
+        }
 
     def load_profile(self) -> CandidateProfile:
         return load_profile(self.profile_path)
@@ -39,12 +47,14 @@ class CloudAutomationService:
 
         for job in jobs:
             score = score_job(job, profile)
+            adapter = select_adapter_for_job(job, self.adapters)
+            application_plan = adapter.create_application_plan(profile, job, score)
             tracking_row = build_tracking_row(
                 profile,
                 job,
                 score,
-                applied=mark_applied and score.decision == "auto_apply" and job.application_method != "external",
-                applied_on=date.today() if mark_applied and score.decision == "auto_apply" and job.application_method != "external" else None,
+                applied=mark_applied and application_plan.can_auto_submit,
+                applied_on=date.today() if mark_applied and application_plan.can_auto_submit else None,
             )
             stored = upsert_job(
                 state,
@@ -60,6 +70,7 @@ class CloudAutomationService:
                     "decision": score.decision,
                     "score": score.score,
                     "reasons": score.reasons,
+                    "application_plan": asdict(application_plan),
                 }
             )
 
