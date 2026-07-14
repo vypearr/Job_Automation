@@ -122,6 +122,47 @@ The repo now includes `render.yaml` for:
 
 The current cron runner processes a configured jobs file and persists decisions. It does not yet perform full cloud-native browser login automation for Handshake or LinkedIn.
 
+The current cloud result payload now includes an `application_plan` per job with:
+
+- `next_action`
+- `can_auto_submit`
+- `blockers`
+- `required_documents`
+
+The current decision layer is designed to behave like this:
+
+- Handshake internal + high-confidence + no blockers -> `full_submit`
+- Handshake external -> `review_external`
+- Cover letter required -> `skip`
+- Unsupported document requirements -> review or skip depending on blockers
+
+## Spreadsheet webhook sync
+
+The cloud runner can push processed tracking rows to a sheet webhook after each run.
+
+Set these environment variables in Render:
+
+- `JOB_AGENT_TRACKING_WEBHOOK_URL`
+- `JOB_AGENT_TRACKING_WEBHOOK_SECRET` (optional, sent as `?secret=...`)
+- `JOB_AGENT_TRACKING_TIMEOUT_SECONDS` (optional, defaults to `30`)
+
+The runner posts a JSON payload containing:
+
+- run metadata
+- `jobs_seen`
+- `jobs_written`
+- `rows`, where each row includes:
+  - `job_id`
+  - `company`
+  - `role`
+  - `status`
+  - `decision`
+  - `score`
+  - `sheet_name`
+  - `sheet_row` with columns `A` through `F`
+
+This is a good fit for a Google Apps Script web app that appends rows into the `Applied` sheet.
+
 ## Account connection guidance
 
 - GitHub profile URLs can be stored directly in `profile.json`, but private account access still requires a signed-in browser session or an API token.
