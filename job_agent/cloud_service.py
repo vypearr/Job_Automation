@@ -12,6 +12,7 @@ from .models import CandidateProfile, JobPosting
 from .platforms import select_adapter_for_job
 from .profile_loader import load_profile
 from .scoring import score_job
+from .submission import GenericSubmissionExecutor, HandshakeSubmissionExecutor
 from .tracking import build_sheet_row_map, build_tracking_row
 
 
@@ -28,6 +29,12 @@ class CloudAutomationService:
             "indeed": IndeedAdapter(),
             "generic_hosted": GenericHostedAdapter(),
         }
+        self.executors = {
+            "handshake": HandshakeSubmissionExecutor(),
+            "linkedin": GenericSubmissionExecutor(),
+            "indeed": GenericSubmissionExecutor(),
+            "generic_hosted": GenericSubmissionExecutor(),
+        }
 
     def load_profile(self) -> CandidateProfile:
         return load_profile(self.profile_path)
@@ -40,7 +47,13 @@ class CloudAutomationService:
         state = self.state_store.load()
         return [asdict(run) for run in state.runs]
 
-    def process_jobs(self, jobs: list[JobPosting], *, mark_applied: bool = False) -> dict:
+    def process_jobs(
+        self,
+        jobs: list[JobPosting],
+        *,
+        mark_applied: bool = False,
+        execute_submissions: bool = False,
+    ) -> dict:
         profile = self.load_profile()
         state = self.state_store.load()
         processed: list[dict] = []
@@ -49,12 +62,28 @@ class CloudAutomationService:
             score = score_job(job, profile)
             adapter = select_adapter_for_job(job, self.adapters)
             application_plan = adapter.create_application_plan(profile, job, score)
+            executor = select_adapter_for_job(job, self.executors)
+            submission_attempt = (
+                executor.submit(profile, job, application_plan)
+                if execute_submissions
+                else {
+                    "attempted": False,
+                    "submitted": False,
+                    "status": "not_requested",
+                    "notes": ["Automatic submission was not requested for this run."],
+                }
+            )
+            submitted = (
+                submission_attempt.submitted
+                if hasattr(submission_attempt, "submitted")
+                else bool(submission_attempt.get("submitted", False))
+            )
             tracking_row = build_tracking_row(
                 profile,
                 job,
                 score,
-                applied=mark_applied and application_plan.can_auto_submit,
-                applied_on=date.today() if mark_applied and application_plan.can_auto_submit else None,
+                applied=submitted or (mark_applied and application_plan.can_auto_submit),
+                applied_on=date.today() if submitted or (mark_applied and application_plan.can_auto_submit) else None,
             )
             stored = upsert_job(
                 state,
@@ -71,6 +100,9 @@ class CloudAutomationService:
                     "score": score.score,
                     "reasons": score.reasons,
                     "application_plan": asdict(application_plan),
+                    "submission_attempt": asdict(submission_attempt)
+                    if hasattr(submission_attempt, "__dataclass_fields__")
+                    else submission_attempt,
                 }
             )
 
@@ -88,6 +120,12 @@ class CloudAutomationService:
             "results": processed,
         }
 
-    def process_jobs_file(self, jobs_path: str | Path, *, mark_applied: bool = False) -> dict:
+    def process_jobs_file(
+        self,
+        jobs_path: str | Path,
+        *,
+        mark_applied: bool = False,
+        execute_submissions: bool = False,
+    ) -> dict:
         jobs = load_jobs(jobs_path)
-        return self.process_jobs(jobs, mark_applied=mark_applied)
+        return self.process_jobs(jobs, mark_applied=mark_applied, execute_submissions=execute_submissions)
