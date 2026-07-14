@@ -51,6 +51,13 @@ To run the scheduled cloud worker locally:
 & 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.daily_run
 ```
 
+The daily runner now prefers these intake files in order when `JOB_AGENT_JOBS_FILE` is not set:
+
+- `data/handshake_enriched_jobs.json`
+- `data/handshake_targeted_jobs.json`
+- `data/handshake_live_jobs.json`
+- `handshake_selected_job_sample.json`
+
 ## Input formats
 
 ### JSON
@@ -121,6 +128,8 @@ The repo now includes `render.yaml` for:
 - one cron service for the recurring runner
 
 The current cron runner processes a configured jobs file and persists decisions. It does not yet perform full cloud-native browser login automation for Handshake or LinkedIn.
+
+When present, the runner will now automatically prefer the locally prepared enriched or targeted Handshake batches over the old one-job sample file.
 
 The current cloud result payload now includes an `application_plan` per job with:
 
