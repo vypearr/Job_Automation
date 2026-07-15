@@ -170,7 +170,26 @@ The runner posts a JSON payload containing:
   - `sheet_name`
   - `sheet_row` with columns `A` through `F`
 
-This is a good fit for a Google Apps Script web app that appends rows into the `Applied` sheet.
+This is a good fit for a Google Apps Script web app that upserts rows into the `Applied` sheet by `job_id`.
+
+A ready-to-paste Apps Script webhook is included at `google_apps_script/tracking_webhook.gs`. It is designed to:
+
+- keep `Job ID` in column `G`
+- update an existing row when the same `job_id` appears again
+- append a new row only when the `job_id` is new
+- normalize malformed statuses such as `appliedCheckin/Review` back to `applied`
+
+To generate a sample webhook payload locally for verification:
+
+```powershell
+& 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.emit_tracking_payload --out data/tracking_webhook_sample.json
+```
+
+If you want the sample payload to mark eligible internal jobs as applied:
+
+```powershell
+& 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.emit_tracking_payload --mark-applied --out data/tracking_webhook_applied_sample.json
+```
 
 ## Account connection guidance
 

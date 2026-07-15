@@ -86,6 +86,30 @@ NEGATIVE_SIGNALS = {
     ],
 }
 
+VOLUME_ADJACENT_DOMAIN_TERMS = [
+    "software engineer",
+    "software engineering",
+    "software",
+    "ai",
+    "artificial intelligence",
+    "machine learning",
+    "product testing",
+    "quality assurance",
+    "qa",
+    "test automation",
+    "testing",
+    "automation",
+    "python",
+]
+
+VOLUME_STUDENT_TERMS = [
+    "intern",
+    "internship",
+    "student",
+    "undergraduate",
+    "new grad",
+]
+
 
 def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
     haystack = normalize(" ".join([job.title, job.company, job.location, job.description]))
@@ -171,6 +195,13 @@ def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
         elif job.application_method == "internal":
             gating_flags.append("internal_apply")
             reasons.append("application appears to stay inside Handshake")
+        if is_volume_auto_apply_candidate(job, profile, haystack):
+            decision = "auto_apply"
+            score = max(score, 65)
+            gating_flags.append("volume_adjacent_ok")
+            reasons.append(
+                "volume strategy override: adjacent internal internship with allowed documents is eligible for auto-apply"
+            )
 
     if decision == "auto_apply":
         reasons.append("high confidence fit for Tarun's robotics and embedded trajectory")
@@ -195,6 +226,34 @@ def decide(score: int) -> str:
     if score >= 40:
         return "review"
     return "skip"
+
+
+def is_volume_auto_apply_candidate(job: JobPosting, profile: CandidateProfile, haystack: str) -> bool:
+    if str(profile.constraints.get("application_strategy", "")).strip().lower() != "volume":
+        return False
+    if job.application_method != "internal":
+        return False
+    if job.requires_cover_letter and bool(profile.constraints.get("skip_cover_letter_required", False)):
+        return False
+
+    allowed_documents = {
+        str(value).strip().lower()
+        for value in profile.constraints.get("allowed_required_documents", [])
+        if str(value).strip()
+    }
+    required_documents = []
+    if job.requires_resume:
+        required_documents.append("resume")
+    if job.requires_transcript:
+        required_documents.append("transcript")
+    if job.requires_cover_letter:
+        required_documents.append("cover_letter")
+    if any(document not in allowed_documents for document in required_documents):
+        return False
+
+    has_student_signal = any(term in haystack for term in VOLUME_STUDENT_TERMS)
+    has_adjacent_signal = any(term in haystack for term in VOLUME_ADJACENT_DOMAIN_TERMS)
+    return has_student_signal and has_adjacent_signal
 
 
 def collect_profile_terms(profile: CandidateProfile) -> list[str]:
