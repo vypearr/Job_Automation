@@ -6,3 +6,4 @@ handshake_tracking.csv
 handshake_selected_tracking.csv
 handshake_imported.json
 *.log
+data/handshake_browser_profile/

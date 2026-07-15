@@ -107,6 +107,32 @@ Before I wire live automation, we should connect one source at a time and decide
 - open tabs for review
 - submit automatically for high-confidence matches
 
+## Local queued-job submit runner
+
+The cloud cron can now discover, score, queue, and sync jobs accurately, but true Handshake submission still needs a signed-in local browser session.
+
+Use the local queued-job runner to submit `queued` internal Handshake jobs from your machine:
+
+```powershell
+& 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.local_submit --limit 15
+```
+
+The first time, a local Chromium window will open using a persistent profile under `data/handshake_browser_profile`. Sign into Handshake there once. After that, the runner can reuse that local session for future queued jobs.
+
+Optional flags:
+
+- `--headless` to reuse the saved browser session without opening a visible window
+- `--limit 15` to cap how many queued jobs to attempt in one pass
+- `--user-data-dir data/handshake_browser_profile` to choose a different persistent browser profile
+
+The local submit runner will:
+
+- read queued internal Handshake jobs from `data/state.json`
+- attempt to submit them in the local browser
+- change successfully submitted jobs to `applied`
+- keep session-blocked jobs as `queued`
+- sync updated rows back to the Google Sheet webhook
+
 The current profile is configured for:
 
 - primary platform: `handshake`
