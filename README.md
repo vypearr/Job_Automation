@@ -111,7 +111,21 @@ Before I wire live automation, we should connect one source at a time and decide
 
 The cloud cron can now discover, score, queue, and sync jobs accurately, but true Handshake submission still needs a signed-in local browser session.
 
-Use the local queued-job runner to submit `queued` internal Handshake jobs from your machine:
+For the smoothest day-to-day use on Windows, use the helper launchers in `scripts\`:
+
+```powershell
+scripts\bootstrap_handshake_login.cmd
+scripts\run_local_queue_submit.cmd 25
+scripts\run_local_daily_cycle.cmd 25
+```
+
+They do three different jobs:
+
+- `bootstrap_handshake_login.cmd` opens the persistent local Handshake browser profile so you can sign in once
+- `run_local_queue_submit.cmd 25` attempts up to 25 currently queued Handshake-hosted jobs and syncs the results back to the sheet
+- `run_local_daily_cycle.cmd 25` runs the full local cycle: intake refresh, queue update, local submit pass, and final full-state sheet resync
+
+Use the local queued-job runner to submit `queued` Handshake-hosted jobs from your machine:
 
 ```powershell
 & 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.local_submit --limit 15
@@ -127,11 +141,41 @@ Optional flags:
 
 The local submit runner will:
 
-- read queued internal Handshake jobs from `data/state.json`
+- read queued Handshake-hosted jobs from `data/state.json`
 - attempt to submit them in the local browser
 - change successfully submitted jobs to `applied`
 - keep session-blocked jobs as `queued`
 - sync updated rows back to the Google Sheet webhook
+
+If you want one command that runs the full local cycle:
+
+- merge the latest Handshake intake files
+- score and queue jobs into local state
+- run a local Handshake submit pass
+- push the final full-state view back to Google Sheets
+
+use:
+
+```powershell
+C:\Users\ttamb\AppData\Local\Programs\Python\Python313\python.exe -m job_agent.local_daily_cycle --submit-limit 25
+```
+
+or, more simply:
+
+```powershell
+scripts\run_local_daily_cycle.cmd 25
+```
+
+Optional flags:
+
+- `--headless` after your local Handshake browser profile is already signed in
+- `--submit-limit 25` to control how many queued jobs the local browser should attempt in one pass
+
+If you want to force the entire current local state back into the sheet at once:
+
+```powershell
+& 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.sync_state_to_sheet
+```
 
 The current profile is configured for:
 

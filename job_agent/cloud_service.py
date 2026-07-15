@@ -63,6 +63,7 @@ class CloudAutomationService:
             adapter = select_adapter_for_job(job, self.adapters)
             application_plan = adapter.create_application_plan(profile, job, score)
             executor = select_adapter_for_job(job, self.executors)
+            existing = next((item for item in state.jobs if item.id == job.id), None)
             submission_attempt = (
                 executor.submit(profile, job, application_plan)
                 if execute_submissions
@@ -94,12 +95,22 @@ class CloudAutomationService:
                 applied_on=date.today() if submitted else None,
                 status_override=status_override,
             )
+            stored_status = tracking_row.status
+            # Preserve already-applied jobs during intake-only runs so a later
+            # queueing pass does not regress them back to queued.
+            if (
+                existing is not None
+                and str(existing.status).strip().lower()
+                == str(profile.constraints.get("applied_status_value", "applied")).strip().lower()
+                and not submitted
+            ):
+                stored_status = existing.status
             stored = upsert_job(
                 state,
                 job,
                 score=score.score,
                 decision=score.decision,
-                status=tracking_row.status,
+                status=stored_status,
             )
             processed.append(
                 {
