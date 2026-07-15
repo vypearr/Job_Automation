@@ -12,10 +12,13 @@ def build_tracking_row(
     *,
     applied: bool = False,
     applied_on: date | None = None,
+    status_override: str | None = None,
 ) -> TrackingRow:
     applied_status = str(profile.constraints.get("applied_status_value", "applied"))
     review_status = "Checkin/Review"
-    status = applied_status if applied else infer_pending_status(job, score, fallback=review_status)
+    status = status_override or (
+        applied_status if applied else infer_pending_status(job, score, fallback=review_status)
+    )
     when = applied_on.isoformat() if applied_on else ""
 
     return TrackingRow(

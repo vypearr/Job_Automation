@@ -100,6 +100,19 @@ VOLUME_ADJACENT_DOMAIN_TERMS = [
     "testing",
     "automation",
     "python",
+    "hardware",
+    "hardware engineer",
+    "embedded",
+    "firmware",
+    "electrical engineer",
+    "validation",
+    "verification",
+    "fpga",
+    "digital hardware",
+    "control systems",
+    "teleoperation",
+    "systems engineer",
+    "engineering technician",
 ]
 
 VOLUME_STUDENT_TERMS = [
@@ -108,6 +121,17 @@ VOLUME_STUDENT_TERMS = [
     "student",
     "undergraduate",
     "new grad",
+]
+
+VOLUME_EARLY_CAREER_TERMS = [
+    "early career",
+    "entry level",
+    "junior",
+    "jr ",
+    "engineer i",
+    "career accelerator",
+    "co op",
+    "coop",
 ]
 
 
@@ -195,7 +219,7 @@ def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
         elif job.application_method == "internal":
             gating_flags.append("internal_apply")
             reasons.append("application appears to stay inside Handshake")
-        if is_volume_auto_apply_candidate(job, profile, haystack):
+        if is_volume_auto_apply_candidate(job, profile, haystack, title_haystack, score):
             decision = "auto_apply"
             score = max(score, 65)
             gating_flags.append("volume_adjacent_ok")
@@ -228,10 +252,16 @@ def decide(score: int) -> str:
     return "skip"
 
 
-def is_volume_auto_apply_candidate(job: JobPosting, profile: CandidateProfile, haystack: str) -> bool:
+def is_volume_auto_apply_candidate(
+    job: JobPosting,
+    profile: CandidateProfile,
+    haystack: str,
+    title_haystack: str,
+    raw_score: int,
+) -> bool:
     if str(profile.constraints.get("application_strategy", "")).strip().lower() != "volume":
         return False
-    if job.application_method != "internal":
+    if job.application_method == "external":
         return False
     if job.requires_cover_letter and bool(profile.constraints.get("skip_cover_letter_required", False)):
         return False
@@ -252,8 +282,14 @@ def is_volume_auto_apply_candidate(job: JobPosting, profile: CandidateProfile, h
         return False
 
     has_student_signal = any(term in haystack for term in VOLUME_STUDENT_TERMS)
+    has_early_career_signal = any(term in haystack for term in VOLUME_EARLY_CAREER_TERMS)
     has_adjacent_signal = any(term in haystack for term in VOLUME_ADJACENT_DOMAIN_TERMS)
-    return has_student_signal and has_adjacent_signal
+    has_title_adjacent_signal = any(term in title_haystack for term in VOLUME_ADJACENT_DOMAIN_TERMS)
+    if not has_adjacent_signal and not has_title_adjacent_signal:
+        return False
+    if has_student_signal or has_early_career_signal:
+        return True
+    return raw_score >= 35 and job.application_method == "internal"
 
 
 def collect_profile_terms(profile: CandidateProfile) -> list[str]:

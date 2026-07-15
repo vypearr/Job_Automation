@@ -78,12 +78,21 @@ class CloudAutomationService:
                 if hasattr(submission_attempt, "submitted")
                 else bool(submission_attempt.get("submitted", False))
             )
+            submission_status = (
+                submission_attempt.status
+                if hasattr(submission_attempt, "status")
+                else str(submission_attempt.get("status", ""))
+            )
+            status_override = None
+            if not submitted and application_plan.can_auto_submit:
+                status_override = "queued"
             tracking_row = build_tracking_row(
                 profile,
                 job,
                 score,
-                applied=submitted or (mark_applied and application_plan.can_auto_submit),
-                applied_on=date.today() if submitted or (mark_applied and application_plan.can_auto_submit) else None,
+                applied=submitted,
+                applied_on=date.today() if submitted else None,
+                status_override=status_override,
             )
             stored = upsert_job(
                 state,
@@ -103,6 +112,7 @@ class CloudAutomationService:
                     "submission_attempt": asdict(submission_attempt)
                     if hasattr(submission_attempt, "__dataclass_fields__")
                     else submission_attempt,
+                    "tracking_status_reason": submission_status,
                 }
             )
 
