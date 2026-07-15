@@ -16,6 +16,17 @@ from .submission import GenericSubmissionExecutor, HandshakeSubmissionExecutor
 from .tracking import build_sheet_row_map, build_tracking_row
 
 
+def is_live_queueable_job(job: JobPosting) -> bool:
+    url = str(job.url or "").lower()
+    application_url = str(job.application_url or "").lower()
+    source = str(job.source or "").lower()
+    return not (
+        "example.com" in url
+        or "example.com" in application_url
+        or source == "manual"
+    )
+
+
 class CloudAutomationService:
     def __init__(self, base_dir: str | Path) -> None:
         self.base_dir = Path(base_dir)
@@ -85,7 +96,7 @@ class CloudAutomationService:
                 else str(submission_attempt.get("status", ""))
             )
             status_override = None
-            if not submitted and application_plan.can_auto_submit:
+            if not submitted and application_plan.can_auto_submit and is_live_queueable_job(job):
                 status_override = "queued"
             tracking_row = build_tracking_row(
                 profile,
