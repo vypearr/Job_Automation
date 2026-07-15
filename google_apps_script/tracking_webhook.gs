@@ -119,12 +119,24 @@ function buildSheetValues_(row) {
   return [
     String(sheetRow.A || ''),
     String(sheetRow.B || ''),
-    String(sheetRow.C || ''),
+    buildHyperlinkFormula_(row.job_url || row.application_url || '', String(sheetRow.C || '')),
     String(sheetRow.D || ''),
     String(sheetRow.E || ''),
     normalizeStatus_(sheetRow.F || row.status || ''),
     String(row.job_id || ''),
   ];
+}
+
+function buildHyperlinkFormula_(url, label) {
+  const cleanUrl = String(url || '').trim();
+  const cleanLabel = String(label || '').trim();
+  if (!cleanUrl || !cleanLabel) {
+    return cleanLabel;
+  }
+
+  const escapedUrl = cleanUrl.replace(/"/g, '""');
+  const escapedLabel = cleanLabel.replace(/"/g, '""');
+  return `=HYPERLINK("${escapedUrl}","${escapedLabel}")`;
 }
 
 function normalizeStatus_(value) {

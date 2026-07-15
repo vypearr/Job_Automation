@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import { chromium } from "playwright";
 
 function parseArgs(argv) {
   const options = {
@@ -7,6 +6,7 @@ function parseArgs(argv) {
     outputPath: "",
     userDataDir: "",
     headless: false,
+    loginOnly: false,
     origin: "https://app.joinhandshake.com",
   };
 
@@ -24,6 +24,9 @@ function parseArgs(argv) {
     } else if (value === "--headless") {
       options.headless = String(argv[index + 1] || "").toLowerCase() === "true";
       index += 1;
+    } else if (value === "--login-only") {
+      options.loginOnly = String(argv[index + 1] || "").toLowerCase() === "true";
+      index += 1;
     } else if (value === "--origin") {
       options.origin = argv[index + 1] || options.origin;
       index += 1;
@@ -40,6 +43,19 @@ function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+async function loadPlaywright() {
+  const explicitImport = normalizeText(process.env.JOB_AGENT_PLAYWRIGHT_IMPORT || "");
+  if (explicitImport) {
+    const mod = await import(explicitImport);
+    return mod;
+  }
+  try {
+    return await import("playwright");
+  } catch {
+    return import("playwright-core");
+  }
+}
+
 async function isLoginRequired(page) {
   const currentUrl = page.url().toLowerCase();
   if (currentUrl.includes("sign_in") || currentUrl.includes("login")) {
@@ -47,6 +63,48 @@ async function isLoginRequired(page) {
   }
   const bodyText = normalizeText(await page.locator("body").textContent()).toLowerCase();
   return bodyText.includes("sign in") && bodyText.includes("handshake");
+}
+
+async function safeGoto(page, url) {
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+  } catch (error) {
+    const message = normalizeText(error?.message || String(error));
+    if (!message.toLowerCase().includes("net::err_aborted")) {
+      throw error;
+    }
+  }
+  await page.waitForTimeout(1500);
+}
+
+async function waitForLoginCompletion(page, origin) {
+  process.stdout.write("Handshake login required in the opened browser. Finish signing in there; the runner will keep waiting.\n");
+  const deadline = Date.now() + 5 * 60 * 1000;
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(2000);
+    const currentUrl = page.url();
+    if (!currentUrl) {
+      continue;
+    }
+    if (!(await isLoginRequired(page))) {
+      return true;
+    }
+    const lowerUrl = currentUrl.toLowerCase();
+    if (lowerUrl.includes("saml") || lowerUrl.includes("sso") || lowerUrl.includes("idp")) {
+      continue;
+    }
+    if (lowerUrl.startsWith(origin.toLowerCase()) && !lowerUrl.includes("sign_in")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function waitForUserClose(page) {
+  process.stdout.write("Login bootstrap complete. Close the browser window when you're done verifying the session.\n");
+  while (!page.isClosed()) {
+    await page.waitForTimeout(1000);
+  }
 }
 
 async function clickVisibleButton(page, name) {
@@ -77,8 +135,7 @@ async function captureModalState(page) {
 }
 
 async function submitHandshakeJob(page, job) {
-  await page.goto(job.url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForTimeout(1200);
+  await safeGoto(page, job.url);
 
   if (await isLoginRequired(page)) {
     return {
@@ -167,14 +224,21 @@ async function submitHandshakeJob(page, job) {
 }
 
 async function main() {
+  const { chromium } = await loadPlaywright();
   const options = parseArgs(process.argv.slice(2));
   const jobs = JSON.parse(await fs.readFile(options.jobsPath, "utf8"));
   await fs.mkdir(options.userDataDir, { recursive: true });
+  const executablePath = normalizeText(process.env.JOB_AGENT_BROWSER_EXECUTABLE || "");
 
-  const context = await chromium.launchPersistentContext(options.userDataDir, {
+  const launchOptions = {
     headless: options.headless,
     viewport: { width: 1440, height: 960 },
-  });
+  };
+  if (executablePath) {
+    launchOptions.executablePath = executablePath;
+  }
+
+  const context = await chromium.launchPersistentContext(options.userDataDir, launchOptions);
 
   let page = context.pages()[0];
   if (!page) {
@@ -183,8 +247,19 @@ async function main() {
 
   const results = [];
   try {
-    await page.goto(options.origin, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForTimeout(1200);
+    await safeGoto(page, options.origin);
+    if (await isLoginRequired(page)) {
+      const loggedIn = await waitForLoginCompletion(page, options.origin);
+      if (!loggedIn) {
+        throw new Error("Timed out waiting for Handshake login to complete in the local browser.");
+      }
+      await safeGoto(page, options.origin);
+    }
+
+    if (options.loginOnly) {
+      await waitForUserClose(page);
+      return;
+    }
 
     for (const job of jobs) {
       results.push(await submitHandshakeJob(page, job));

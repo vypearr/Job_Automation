@@ -32,6 +32,11 @@ def main() -> None:
         action="store_true",
         help="Run the local Chromium session headlessly after you have already logged in once.",
     )
+    parser.add_argument(
+        "--login-only",
+        action="store_true",
+        help="Open the persistent local browser profile just for Handshake sign-in bootstrap, without attempting submissions.",
+    )
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent.parent
@@ -54,6 +59,7 @@ def main() -> None:
         jobs=[stored_job_to_payload(job) for job in queued_jobs],
         user_data_dir=base_dir / args.user_data_dir,
         headless=args.headless,
+        login_only=args.login_only,
     )
 
     processed_rows = []
@@ -155,10 +161,6 @@ def detect_node_executable() -> Path:
     if configured:
         return Path(configured)
 
-    node_on_path = shutil.which("node")
-    if node_on_path:
-        return Path(node_on_path)
-
     home = Path.home()
     candidates = [
         home / ".cache" / "codex-runtimes" / "codex-primary-runtime" / "dependencies" / "node" / "bin" / "node.exe",
@@ -167,6 +169,10 @@ def detect_node_executable() -> Path:
     for candidate in candidates:
         if candidate.exists():
             return candidate
+
+    node_on_path = shutil.which("node")
+    if node_on_path:
+        return Path(node_on_path)
 
     raise FileNotFoundError("Could not find Node.js. Set JOB_AGENT_NODE_PATH to the bundled Codex node executable.")
 
@@ -188,9 +194,72 @@ def detect_node_modules(node_executable: Path) -> Path | None:
     return None
 
 
-def run_local_handshake_submit(*, base_dir: Path, jobs: list[dict], user_data_dir: Path, headless: bool) -> list[dict]:
+def detect_playwright_import(node_modules: Path | None) -> str:
+    candidates: list[Path] = []
+    if node_modules:
+        candidates.extend(
+            [
+                node_modules / ".pnpm" / "node_modules" / "playwright-core" / "index.mjs",
+                node_modules / ".pnpm" / "node_modules" / "playwright-core" / "index.js",
+                node_modules / "playwright" / "index.mjs",
+                node_modules / "playwright" / "index.js",
+            ]
+        )
+
+    home = Path.home()
+    candidates.extend(
+        [
+            home
+            / ".codex"
+            / "plugins"
+            / "cache"
+            / "openai-bundled"
+            / "browser"
+            / "26.707.71524"
+            / "scripts"
+            / "node_modules"
+            / "playwright"
+            / "index.mjs",
+        ]
+    )
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve().as_uri()
+    raise FileNotFoundError("Could not locate a Playwright package entrypoint for the local submit runner.")
+
+
+def detect_browser_executable() -> Path | None:
+    configured = os.getenv("JOB_AGENT_BROWSER_EXECUTABLE", "").strip()
+    if configured:
+        configured_path = Path(configured)
+        if configured_path.exists():
+            return configured_path
+
+    candidates = [
+        Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+        Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
+        Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+        Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def run_local_handshake_submit(
+    *,
+    base_dir: Path,
+    jobs: list[dict],
+    user_data_dir: Path,
+    headless: bool,
+    login_only: bool,
+) -> list[dict]:
     node_executable = detect_node_executable()
     node_modules = detect_node_modules(node_executable)
+    playwright_import = detect_playwright_import(node_modules)
+    browser_executable = detect_browser_executable()
     submit_script = base_dir / "browser" / "handshake_submit.js"
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -202,6 +271,9 @@ def run_local_handshake_submit(*, base_dir: Path, jobs: list[dict], user_data_di
         env = os.environ.copy()
         if node_modules:
             env["NODE_PATH"] = str(node_modules)
+        env["JOB_AGENT_PLAYWRIGHT_IMPORT"] = playwright_import
+        if browser_executable:
+            env["JOB_AGENT_BROWSER_EXECUTABLE"] = str(browser_executable)
 
         command = [
             str(node_executable),
@@ -214,6 +286,8 @@ def run_local_handshake_submit(*, base_dir: Path, jobs: list[dict], user_data_di
             str(user_data_dir),
             "--headless",
             "true" if headless else "false",
+            "--login-only",
+            "true" if login_only else "false",
         ]
         completed = subprocess.run(
             command,
@@ -221,11 +295,18 @@ def run_local_handshake_submit(*, base_dir: Path, jobs: list[dict], user_data_di
             env=env,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
         )
 
         if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "Local submit runner failed.")
+            stderr_text = (completed.stderr or "").strip()
+            stdout_text = (completed.stdout or "").strip()
+            raise RuntimeError(stderr_text or stdout_text or "Local submit runner failed.")
+
+        if login_only:
+            return []
 
         return json.loads(output_path.read_text(encoding="utf-8"))
 

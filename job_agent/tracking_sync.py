@@ -45,6 +45,8 @@ def build_tracking_sync_payload(result: dict[str, Any]) -> dict[str, Any]:
                 "job_id": job.get("id", ""),
                 "company": job.get("company", ""),
                 "role": job.get("title", ""),
+                "job_url": job.get("url", ""),
+                "application_url": job.get("application_url", ""),
                 "sheet_name": "Applied",
                 "status": job.get("status", ""),
                 "decision": item.get("decision", ""),
