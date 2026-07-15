@@ -123,10 +123,12 @@ class CloudAutomationService:
             notes=["Cloud run executed against imported jobs."],
         )
         self.state_store.save(state)
+        summary = build_run_summary(profile, processed)
         return {
             "jobs_seen": len(jobs),
             "jobs_written": len(processed),
             "run": asdict(run),
+            "summary": summary,
             "results": processed,
         }
 
@@ -141,3 +143,48 @@ class CloudAutomationService:
         result = self.process_jobs(jobs, mark_applied=mark_applied, execute_submissions=execute_submissions)
         result["jobs_path"] = str(jobs_path)
         return result
+
+
+def build_run_summary(profile: CandidateProfile, processed: list[dict]) -> dict:
+    submitted = 0
+    queued = 0
+    review = 0
+    skipped = 0
+    internal_ready = 0
+    unknown_method = 0
+
+    for item in processed:
+        job = dict(item.get("job", {}))
+        submission_attempt = dict(item.get("submission_attempt", {}))
+        status = str(job.get("status", "")).strip().lower()
+        decision = str(item.get("decision", "")).strip().lower()
+        application_method = str(job.get("application_method", "")).strip().lower()
+
+        if bool(submission_attempt.get("submitted", False)) or status == "applied":
+            submitted += 1
+        elif status == "queued":
+            queued += 1
+        elif decision == "skip":
+            skipped += 1
+        else:
+            review += 1
+
+        if application_method == "internal" and status == "queued":
+            internal_ready += 1
+        if application_method == "unknown":
+            unknown_method += 1
+
+    target_min = int(profile.constraints.get("daily_application_target_min", 0) or 0)
+    target_max = int(profile.constraints.get("daily_application_target_max", target_min) or target_min)
+    return {
+        "submitted_count": submitted,
+        "queued_count": queued,
+        "review_count": review,
+        "skipped_count": skipped,
+        "internal_ready_count": internal_ready,
+        "unknown_method_count": unknown_method,
+        "daily_target_min": target_min,
+        "daily_target_max": target_max,
+        "submitted_target_gap": max(0, target_min - submitted),
+        "qualified_volume_gap": max(0, target_min - (submitted + queued)),
+    }

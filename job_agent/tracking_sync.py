@@ -58,6 +58,7 @@ def build_tracking_sync_payload(result: dict[str, Any]) -> dict[str, Any]:
         "run": run,
         "jobs_seen": result.get("jobs_seen", 0),
         "jobs_written": result.get("jobs_written", 0),
+        "summary": dict(result.get("summary", {})),
         "rows": rows,
     }
 

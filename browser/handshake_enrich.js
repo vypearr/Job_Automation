@@ -18,6 +18,12 @@ async function extractPageSummary(tab) {
     const applyButtons = Array.from(main?.querySelectorAll("button") || [])
       .map((button) => text(button.getAttribute("aria-label") || button.textContent))
       .filter(Boolean);
+    const applyLinks = Array.from(main?.querySelectorAll('a[href]') || [])
+      .map((link) => ({
+        label: text(link.getAttribute("aria-label") || link.textContent),
+        href: String(link.getAttribute("href") || "").trim(),
+      }))
+      .filter((link) => link.label.toLowerCase().includes("apply"));
 
     const paragraphTexts = Array.from(main?.querySelectorAll("p") || [])
       .map((node) => text(node.textContent))
@@ -30,9 +36,36 @@ async function extractPageSummary(tab) {
       company,
       description,
       applyButtons,
+      applyLinks,
       pageText: text(main?.textContent).slice(0, 3000),
     };
   });
+}
+
+function inferApplicationMethod(summary, modalStep) {
+  const buttonLabels = summary.applyButtons.map((label) => normalizeText(label).toLowerCase());
+  const linkTargets = summary.applyLinks.map((link) => String(link.href || "").toLowerCase());
+  const pageText = normalizeText(summary.pageText).toLowerCase();
+  const stepText = normalizeText(modalStep).toLowerCase();
+
+  if (
+    buttonLabels.includes("apply externally") ||
+    pageText.includes("apply externally") ||
+    linkTargets.some((href) => href.includes("apply") && !href.includes("joinhandshake.com"))
+  ) {
+    return "external";
+  }
+
+  if (
+    buttonLabels.includes("apply") ||
+    stepText.includes("submit documents on handshake") ||
+    stepText.includes("apply to employer") ||
+    pageText.includes("submit documents on handshake")
+  ) {
+    return "internal";
+  }
+
+  return "unknown";
 }
 
 async function inspectApplicationModal(tab, applicationMethod) {
@@ -104,19 +137,18 @@ export async function enrichHandshakeJobs(
     await tab.playwright.waitForTimeout(1200);
 
     const summary = await extractPageSummary(tab);
-    const buttonLabels = summary.applyButtons.map((label) => normalizeText(label).toLowerCase());
-    const applicationMethod = buttonLabels.includes("apply externally")
-      ? "external"
-      : buttonLabels.includes("apply")
-        ? "internal"
-        : "unknown";
+    let applicationMethod = inferApplicationMethod(summary, "");
 
-    const modal = applicationMethod === "unknown" ? {
+    let modal = applicationMethod === "unknown" ? {
       requires_resume: job.requires_resume,
       requires_transcript: job.requires_transcript,
       requires_cover_letter: job.requires_cover_letter,
       modal_step: "",
     } : await inspectApplicationModal(tab, applicationMethod);
+    applicationMethod = inferApplicationMethod(summary, modal.modal_step);
+    if (applicationMethod !== "unknown" && modal.modal_step === "") {
+      modal = await inspectApplicationModal(tab, applicationMethod);
+    }
 
     enriched.push({
       ...job,

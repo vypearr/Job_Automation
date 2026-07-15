@@ -145,6 +145,19 @@ The current decision layer is designed to behave like this:
 - Cover letter required -> `skip`
 - Unsupported document requirements -> review or skip depending on blockers
 
+Each cloud run now also emits a compact `summary` that separates:
+
+- `submitted_count`
+- `queued_count`
+- `review_count`
+- `skipped_count`
+- `internal_ready_count`
+- `unknown_method_count`
+- `submitted_target_gap`
+- `qualified_volume_gap`
+
+This makes it easier to see whether the run actually reached the true submit target, or only reached enough qualified volume.
+
 ## Spreadsheet webhook sync
 
 The cloud runner can push processed tracking rows to a sheet webhook after each run.
@@ -226,6 +239,8 @@ That means the eventual daily automation will likely be a hybrid:
 - direct automation for Handshake-native applications
 - site-specific adapters for recurring external ATS targets
 - fallback review queue for rare or custom employer application flows
+
+Today, `queued` specifically means the job is qualified and ready, but the run still needs a signed-in live browser session before it can truly submit.
 
 ## Spreadsheet tracking rules
 
