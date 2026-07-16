@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
+import socket
 from urllib import parse
 from urllib import error, request
 
@@ -121,5 +122,19 @@ def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None
             "enabled": True,
             "synced": False,
             "error": str(exc.reason),
+            "row_count": len(payload["rows"]),
+        }
+    except TimeoutError:
+        return {
+            "enabled": True,
+            "synced": False,
+            "error": f"tracking webhook timed out after {config.timeout_seconds}s",
+            "row_count": len(payload["rows"]),
+        }
+    except socket.timeout:
+        return {
+            "enabled": True,
+            "synced": False,
+            "error": f"tracking webhook timed out after {config.timeout_seconds}s",
             "row_count": len(payload["rows"]),
         }
