@@ -45,6 +45,8 @@ To import visible LinkedIn or Indeed labels:
 & 'C:\Users\ttamb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m job_agent.cli --jobs sample_jobs.json --platform-labels linkedin_visible_cards.txt --import-json-out linkedin_imported.json --tracking-out linkedin_tracking.csv
 ```
 
+LinkedIn and Indeed label imports now use stable deterministic job IDs based on title, company, and location so repeated imports do not create avoidable duplicate rows when the card order changes.
+
 To run the scheduled cloud worker locally:
 
 ```powershell
@@ -54,9 +56,20 @@ To run the scheduled cloud worker locally:
 The daily runner now prefers these intake files in order when `JOB_AGENT_JOBS_FILE` is not set:
 
 - `data/handshake_enriched_jobs.json`
+- `data/linkedin_enriched_jobs.json`
+- `data/linkedin_targeted_jobs.json`
+- `data/linkedin_live_jobs.json`
 - `data/handshake_targeted_jobs.json`
 - `data/handshake_live_jobs.json`
+- `linkedin_imported.json`
 - `handshake_selected_job_sample.json`
+
+If you want to combine one primary file with additional sources in the same cron run, set:
+
+- `JOB_AGENT_JOBS_FILE`
+- `JOB_AGENT_EXTRA_JOBS_FILES`
+
+where `JOB_AGENT_EXTRA_JOBS_FILES` can contain a comma-separated or semicolon-separated list of extra JSON or CSV job files.
 
 ## Input formats
 
@@ -206,6 +219,12 @@ The current profile is configured for:
 - daily target: `15` new tracked jobs on the sheet
 - skip jobs requiring a cover letter
 - transcript path stored for transcript-required roles
+
+For the current `volume` strategy, the scorer is now intentionally more permissive:
+
+- adjacent early-career software, AI, embedded, hardware test, validation, and product-testing roles are more likely to land in `review`
+- volume-mode review threshold is lower than the default robotics-focused threshold
+- strong adjacent internal roles can still escalate to `auto_apply`
 
 ## Important note
 

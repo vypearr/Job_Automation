@@ -113,6 +113,16 @@ VOLUME_ADJACENT_DOMAIN_TERMS = [
     "teleoperation",
     "systems engineer",
     "engineering technician",
+    "associate engineer",
+    "solutions engineer",
+    "product engineer",
+    "product testing",
+    "design engineer",
+    "hardware test",
+    "test engineer",
+    "validation engineer",
+    "integration engineer",
+    "applications engineer",
 ]
 
 VOLUME_STUDENT_TERMS = [
@@ -195,10 +205,9 @@ def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
         score += min(15, len(title_focus_terms) * 5)
         reasons.append(f"title-domain bonus from: {', '.join(sorted(set(title_focus_terms)))}")
 
-    score = max(0, min(score, 100))
-    decision = decide(score)
-
     strategy = profile.constraints.get("application_strategy", "")
+    score = max(0, min(score, 100))
+    decision = decide(score, strategy=strategy)
     skip_cover_letter = bool(profile.constraints.get("skip_cover_letter_required", False))
     if skip_cover_letter and job.requires_cover_letter:
         decision = "skip"
@@ -219,6 +228,14 @@ def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
         elif job.application_method == "internal":
             gating_flags.append("internal_apply")
             reasons.append("application appears to stay inside Handshake")
+        if is_volume_review_candidate(job, haystack, title_haystack, score):
+            if decision == "skip":
+                decision = "review"
+                score = max(score, 25)
+                gating_flags.append("volume_adjacent_review")
+                reasons.append(
+                    "volume strategy override: adjacent early-career engineering role is worth tracking even if it is not robotics-first"
+                )
         if is_volume_auto_apply_candidate(job, profile, haystack, title_haystack, score):
             decision = "auto_apply"
             score = max(score, 65)
@@ -244,12 +261,36 @@ def score_job(job: JobPosting, profile: CandidateProfile) -> ScoreBreakdown:
     )
 
 
-def decide(score: int) -> str:
+def decide(score: int, *, strategy: str = "") -> str:
+    if str(strategy).strip().lower() == "volume":
+        if score >= 55:
+            return "auto_apply"
+        if score >= 25:
+            return "review"
+        return "skip"
     if score >= 65:
         return "auto_apply"
     if score >= 40:
         return "review"
     return "skip"
+
+
+def is_volume_review_candidate(
+    job: JobPosting,
+    haystack: str,
+    title_haystack: str,
+    raw_score: int,
+) -> bool:
+    if job.requires_cover_letter:
+        return False
+    if raw_score >= 25:
+        return True
+
+    has_student_signal = any(term in haystack for term in VOLUME_STUDENT_TERMS)
+    has_early_career_signal = any(term in haystack for term in VOLUME_EARLY_CAREER_TERMS)
+    has_adjacent_signal = any(term in haystack for term in VOLUME_ADJACENT_DOMAIN_TERMS)
+    has_title_adjacent_signal = any(term in title_haystack for term in VOLUME_ADJACENT_DOMAIN_TERMS)
+    return (has_student_signal or has_early_career_signal) and (has_adjacent_signal or has_title_adjacent_signal)
 
 
 def is_volume_auto_apply_candidate(

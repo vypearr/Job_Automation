@@ -25,13 +25,27 @@ def enrich_summary_with_sheet_target(result: dict, target_min: int, target_max: 
 
 def resolve_jobs_files(base_dir: Path) -> list[Path]:
     configured = os.getenv("JOB_AGENT_JOBS_FILE", "").strip()
+    configured_extra = os.getenv("JOB_AGENT_EXTRA_JOBS_FILES", "").strip()
+
+    configured_files: list[Path] = []
     if configured:
-        return [Path(configured)]
+        configured_files.append(Path(configured))
+    if configured_extra:
+        for raw_path in configured_extra.replace(";", ",").split(","):
+            cleaned = raw_path.strip()
+            if cleaned:
+                configured_files.append(Path(cleaned))
+    if configured_files:
+        return configured_files
 
     candidates = [
         base_dir / "data" / "handshake_enriched_jobs.json",
+        base_dir / "data" / "linkedin_enriched_jobs.json",
+        base_dir / "data" / "linkedin_targeted_jobs.json",
+        base_dir / "data" / "linkedin_live_jobs.json",
         base_dir / "data" / "handshake_live_jobs.json",
         base_dir / "data" / "handshake_targeted_jobs.json",
+        base_dir / "linkedin_imported.json",
         base_dir / "handshake_selected_job_sample.json",
     ]
     existing = [candidate for candidate in candidates if candidate.exists()]
