@@ -125,6 +125,27 @@ They do three different jobs:
 - `run_local_queue_submit.cmd 25` attempts up to 25 currently queued Handshake-hosted jobs and syncs the results back to the sheet
 - `run_local_daily_cycle.cmd 25` runs the full local cycle: intake refresh, queue update, local submit pass, and final full-state sheet resync
 
+There is now also an unattended Windows runner:
+
+```powershell
+scripts\run_unattended_handshake_cycle.cmd 25
+```
+
+This runs the same local daily cycle headlessly, writes logs into `data\logs`, and is designed to be launched from Windows Task Scheduler.
+
+To register twice-daily scheduled tasks on your machine:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register_unattended_handshake_tasks.ps1
+```
+
+By default this creates:
+
+- `JobAgent Handshake Morning` at `09:00`
+- `JobAgent Handshake Evening` at `17:00`
+
+Both tasks run the unattended local cycle with `submit limit 25`, so the system can keep processing Handshake-native jobs without you manually starting it each time.
+
 Use the local queued-job runner to submit `queued` Handshake-hosted jobs from your machine:
 
 ```powershell
@@ -182,7 +203,7 @@ The current profile is configured for:
 - primary platform: `handshake`
 - high-confidence action: `full_submit`
 - strategy: `volume`
-- daily target: `15` applications
+- daily target: `15` new tracked jobs on the sheet
 - skip jobs requiring a cover letter
 - transcript path stored for transcript-required roles
 
@@ -225,8 +246,11 @@ Each cloud run now also emits a compact `summary` that separates:
 - `unknown_method_count`
 - `submitted_target_gap`
 - `qualified_volume_gap`
+- `new_sheet_rows_appended`
+- `existing_sheet_rows_updated`
+- `sheet_target_gap`
 
-This makes it easier to see whether the run actually reached the true submit target, or only reached enough qualified volume.
+This makes it easier to see whether the run actually reached your real daily KPI: `15` new rows appended to the sheet.
 
 ## Spreadsheet webhook sync
 
@@ -293,7 +317,7 @@ The intended steady-state behavior is:
 - score for robotics, embedded, firmware, and mechatronics fit
 - skip roles requiring a cover letter
 - allow resume-only and resume-plus-transcript flows
-- auto-submit high-confidence jobs until the daily count reaches `15`
+- add at least `15` new unique jobs to the `Applied` sheet each day
 - write tracked jobs into the `Applied` sheet layout
 - mark successfully submitted jobs with status `applied`
 

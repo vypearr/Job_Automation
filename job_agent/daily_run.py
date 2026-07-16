@@ -9,6 +9,20 @@ from .ingest import load_jobs
 from .tracking_sync import sync_tracking_rows
 
 
+def enrich_summary_with_sheet_target(result: dict, target_min: int, target_max: int) -> None:
+    summary = dict(result.get("summary", {}))
+    tracking_sync = dict(result.get("tracking_sync", {}))
+    appended = int(tracking_sync.get("appended", 0) or 0)
+    updated = int(tracking_sync.get("updated", 0) or 0)
+
+    summary["daily_sheet_target_min"] = target_min
+    summary["daily_sheet_target_max"] = target_max
+    summary["new_sheet_rows_appended"] = appended
+    summary["existing_sheet_rows_updated"] = updated
+    summary["sheet_target_gap"] = max(0, target_min - appended)
+    result["summary"] = summary
+
+
 def resolve_jobs_files(base_dir: Path) -> list[Path]:
     configured = os.getenv("JOB_AGENT_JOBS_FILE", "").strip()
     if configured:
@@ -65,6 +79,9 @@ def main() -> None:
     result["jobs_files"] = [str(job_file) for job_file in jobs_files]
     result["merged_jobs_count"] = len(jobs)
     result["tracking_sync"] = sync_tracking_rows(result)
+    target_min = int(service.load_profile().constraints.get("daily_application_target_min", 0) or 0)
+    target_max = int(service.load_profile().constraints.get("daily_application_target_max", target_min) or target_min)
+    enrich_summary_with_sheet_target(result, target_min, target_max)
     print(json.dumps(result, indent=2))
 
 

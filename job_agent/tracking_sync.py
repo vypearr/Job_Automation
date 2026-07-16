@@ -16,6 +16,17 @@ class TrackingSyncConfig:
     timeout_seconds: int = 30
 
 
+def parse_tracking_sync_response(response_text: str) -> dict[str, Any]:
+    text = str(response_text or "").strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def load_tracking_sync_config() -> TrackingSyncConfig | None:
     webhook_url = os.getenv("JOB_AGENT_TRACKING_WEBHOOK_URL", "").strip()
     if not webhook_url:
@@ -85,12 +96,16 @@ def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None
     try:
         with request.urlopen(req, timeout=config.timeout_seconds) as resp:
             response_text = resp.read().decode("utf-8", errors="replace")
+            parsed = parse_tracking_sync_response(response_text)
             return {
                 "enabled": True,
                 "synced": True,
                 "status_code": getattr(resp, "status", 200),
                 "response_text": response_text[:1000],
                 "row_count": len(payload["rows"]),
+                "appended": int(parsed.get("appended", 0) or 0),
+                "updated": int(parsed.get("updated", 0) or 0),
+                "processed": int(parsed.get("processed", 0) or 0),
             }
     except error.HTTPError as exc:
         response_text = exc.read().decode("utf-8", errors="replace")
