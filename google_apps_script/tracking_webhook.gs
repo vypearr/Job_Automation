@@ -19,6 +19,7 @@ function doPost(e) {
     const sheet = getTrackingSheet_();
 
     ensureHeaders_(sheet);
+    dedupeSheetByJobId_(sheet);
 
     const index = buildJobIndex_(sheet);
     let appended = 0;
@@ -33,12 +34,12 @@ function doPost(e) {
       const values = buildSheetValues_(row);
       const existingRow = index.get(jobId);
       if (existingRow) {
-        sheet.getRange(existingRow, 1, 1, values.length).setValues([values]);
+        writeSheetRow_(sheet, existingRow, values, row);
         updated += 1;
       } else {
-        sheet.appendRow(values);
-        index.set(jobId, sheet.getLastRow());
-        updated += 0;
+        const newRow = sheet.getLastRow() + 1;
+        writeSheetRow_(sheet, newRow, values, row);
+        index.set(jobId, newRow);
         appended += 1;
       }
     });
@@ -114,12 +115,42 @@ function buildJobIndex_(sheet) {
   return index;
 }
 
+function dedupeSheetByJobId_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 3) {
+    return;
+  }
+
+  const values = sheet.getRange(2, 1, lastRow - 1, TRACKING_HEADERS.length).getValues();
+  const firstSeenRowByJobId = new Map();
+  const duplicateRows = [];
+
+  values.forEach((row, offset) => {
+    const jobId = String(row[JOB_ID_COLUMN - 1] || '').trim();
+    if (!jobId) {
+      return;
+    }
+    const sheetRowNumber = offset + 2;
+    if (firstSeenRowByJobId.has(jobId)) {
+      duplicateRows.push(sheetRowNumber);
+      return;
+    }
+    firstSeenRowByJobId.set(jobId, sheetRowNumber);
+  });
+
+  duplicateRows
+    .sort((a, b) => b - a)
+    .forEach((rowNumber) => {
+      sheet.deleteRow(rowNumber);
+    });
+}
+
 function buildSheetValues_(row) {
   const sheetRow = row && row.sheet_row ? row.sheet_row : {};
   return [
     String(sheetRow.A || ''),
     String(sheetRow.B || ''),
-    buildHyperlinkFormula_(row.job_url || row.application_url || '', String(sheetRow.C || '')),
+    String(sheetRow.C || ''),
     String(sheetRow.D || ''),
     String(sheetRow.E || ''),
     normalizeStatus_(sheetRow.F || row.status || ''),
@@ -127,11 +158,45 @@ function buildSheetValues_(row) {
   ];
 }
 
+function writeSheetRow_(sheet, rowNumber, values, row) {
+  const existingValues = sheet.getRange(rowNumber, 1, 1, values.length).getDisplayValues()[0];
+  const mergedValues = mergeStickyAppliedValues_(existingValues, values);
+  sheet.getRange(rowNumber, 1, 1, mergedValues.length).setValues([mergedValues]);
+
+  const hyperlinkFormula = buildHyperlinkFormula_(
+    row && (row.job_url || row.application_url || ''),
+    mergedValues[2]
+  );
+  const roleCell = sheet.getRange(rowNumber, 3);
+  if (hyperlinkFormula) {
+    roleCell.setFormula(hyperlinkFormula);
+  } else {
+    roleCell.setValue(mergedValues[2]);
+  }
+}
+
+function mergeStickyAppliedValues_(existingValues, incomingValues) {
+  const merged = incomingValues.slice();
+  const existingStatus = normalizeStatus_(existingValues[STATUS_COLUMN - 1] || '');
+  const incomingStatus = normalizeStatus_(incomingValues[STATUS_COLUMN - 1] || '');
+
+  // Once a job is marked applied in the sheet, later webhook syncs should not
+  // regress it back to queued or review because cloud/local state may lag.
+  if (existingStatus === 'applied' && incomingStatus !== 'applied') {
+    merged[STATUS_COLUMN - 1] = 'applied';
+    if (String(existingValues[0] || '').trim()) {
+      merged[0] = String(existingValues[0] || '').trim();
+    }
+  }
+
+  return merged;
+}
+
 function buildHyperlinkFormula_(url, label) {
   const cleanUrl = String(url || '').trim();
   const cleanLabel = String(label || '').trim();
   if (!cleanUrl || !cleanLabel) {
-    return cleanLabel;
+    return '';
   }
 
   const escapedUrl = cleanUrl.replace(/"/g, '""');

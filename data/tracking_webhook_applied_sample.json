@@ -1,0 +1,357 @@
+{
+  "run": {
+    "run_id": "run-0005",
+    "created_at": "2026-07-15T04:10:11+00:00",
+    "jobs_seen": 19,
+    "jobs_written": 19,
+    "notes": [
+      "Cloud run executed against imported jobs."
+    ]
+  },
+  "jobs_seen": 19,
+  "jobs_written": 19,
+  "rows": [
+    {
+      "job_id": "handshake-11198472",
+      "company": "Wanderboat AI",
+      "role": "Local Business Photo & Video Contributor",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 12,
+      "sheet_row": {
+        "A": "",
+        "B": "Wanderboat AI",
+        "C": "Local Business Photo & Video Contributor",
+        "D": "You started an application on the employer\u2019s website.View application Wanderboat is an AI-powered local discovery platform that helps people discover restaurants, caf\u00e9s, attractions, and unique local experiences through conversational AI and visual content. We are expanding our local merchant coverage across San Francisco and are looking for a L These local jobs have been posted by employers who say they are open to hiring international students. Internet & Software Sunnyvale, CA",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11196088",
+      "company": "Squoosh.AI",
+      "role": "Early Career Software Engineer",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "Squoosh.AI",
+        "C": "Early Career Software Engineer",
+        "D": "Internet & Software New York, NY",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11072759",
+      "company": "Troicom, Inc.",
+      "role": "Embedded Systems Engineer",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 39,
+      "sheet_row": {
+        "A": "",
+        "B": "Troicom, Inc.",
+        "C": "Embedded Systems Engineer",
+        "D": "Electronic & Computer Hardware 27 Mauchly Suite 212, Irvine, California 92618, United States Norman James Roxas Dania Jabri Software Engineer (entry level) Marilyn Vazquez",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11199572",
+      "company": "Anyware Robotics",
+      "role": "Robot Learning Intern \u2014 Manipulation Policy Learning (2026 Fall)",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "review",
+      "score": 59,
+      "sheet_row": {
+        "A": "",
+        "B": "Anyware Robotics",
+        "C": "Robot Learning Intern \u2014 Manipulation Policy Learning (2026 Fall)",
+        "D": "Job Title: Robot Learning Intern \u2014 Manipulation Policy Learning (2026 Fall) Anyware Robotics builds general-purpose mobile manipulator robots for industrial applications. Our robots are deployed in real warehouse and logistics environments, supporti Electronic & Computer Hardware Fremont, CA",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11203249",
+      "company": "Western Digital",
+      "role": "Embedded Firmware Engineer",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "review",
+      "score": 48,
+      "sheet_row": {
+        "A": "",
+        "B": "Western Digital",
+        "C": "Embedded Firmware Engineer",
+        "D": "You started an application on the employer\u2019s website.View application Why this role matters: You'll design and ship embedded firmware that powers enterprise storage products\u2014writing C/C++ code that directly impacts how data centers and cloud infrastructure perform. Join our structured Early Career program where you'll learn our stack, deliver real features, and work alongside experienced firmware engineers. Electronic & Computer Hardware 5601 Great Oaks Parkway, San Jose, California 95119, United States Sheila Gandhi Brandon Rapoza",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11182722",
+      "company": "Anyware Robotics",
+      "role": "Mechatronic Intern",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "review",
+      "score": 54,
+      "sheet_row": {
+        "A": "",
+        "B": "Anyware Robotics",
+        "C": "Mechatronic Intern",
+        "D": "Job Posting Job Title: Mechatronic Intern Location: Onsite, Fremont Department: Hardware Team Employment Type: Full-time Chloe Zhai",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11191413",
+      "company": "Peritus Inc",
+      "role": "Entry Level Hardware Engineer",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 14,
+      "sheet_row": {
+        "A": "",
+        "B": "Peritus Inc",
+        "C": "Entry Level Hardware Engineer",
+        "D": "Key Responsibilities\u2022 Perform first-level hardware triage and troubleshooting for PCs and server platforms.\u2022 Design and implement diagnostic tools and scripts for early hardware validation and fault isolation.\u2022 Identify and resolve setup issues and test failures using structured troubleshooting methodologies. Other Industries Irving, TX",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11112830",
+      "company": "Burns & McDonnell",
+      "role": "Express Interest in a Summer 2027 Electrical Engineering Internship",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 12,
+      "sheet_row": {
+        "A": "",
+        "B": "Burns & McDonnell",
+        "C": "Express Interest in a Summer 2027 Electrical Engineering Internship",
+        "D": "Are you already thinking about your next opportunity? Burns & McDonnell is collecting information now for electrical engineering candidates that are interested in potential 2027 internship opportunities. Fill out our interest form tied to this Handshake posting to get ahead before our formal applications come out in the fall! Our Electrical Engineering Interns are responsible for performing tasks requiring the applica Engineering & Construction Kansas City, MO Norman James Roxas",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-10604807",
+      "company": "Herrick Technology Laboratories, Inc.",
+      "role": "Digital Hardware Engineer",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 35,
+      "sheet_row": {
+        "A": "",
+        "B": "Herrick Technology Laboratories, Inc.",
+        "C": "Digital Hardware Engineer",
+        "D": "Design complex high-speed digital circuits utilizing the latest-generation of microprocessors, digital signal processors, EPLD\u2019s and FPGA\u2019s. Full-time Electronic & Computer Hardware 20201 Century Blvd, Suite 200 Germantown, MD 20874 Ricardo Colin Tesla Auto Pilot Engineering Data Analyst",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11196076",
+      "company": "SpaceX",
+      "role": "New Grad Electrical Engineer (Starship Avionics)",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 12,
+      "sheet_row": {
+        "A": "",
+        "B": "SpaceX",
+        "C": "New Grad Electrical Engineer (Starship Avionics)",
+        "D": "The Starship team supports the mission to revolutionize orbital flight and space travel\u2013opening access for humankind to establish new frontiers in space and ultimately become a multi-planetary species. Our avionics component development team builds some of the most advanced electronics ever flown in space at a cost and rate previously considered unthinkable in the space industry. Become a part of this fast moving and world class hardwar Aerospace Hawthorne, CA",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11143321",
+      "company": "comma.ai",
+      "role": "Hardware Engineer",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 12,
+      "sheet_row": {
+        "A": "",
+        "B": "comma.ai",
+        "C": "Hardware Engineer",
+        "D": "Role: Hardware Engineer Location: San Diego, CA (On-site) We are comma.ai. We're building the Android of self-driving cars and have the second largest fleet after Tesla. We're hiring electrical, hardware, and mechanical engineers to design Internet & Software 3900 Harney St, San Diego, CA 92110",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11203519",
+      "company": "Peritus Inc",
+      "role": "Entry level Hardware Engineer with strong Python",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 17,
+      "sheet_row": {
+        "A": "",
+        "B": "Peritus Inc",
+        "C": "Entry level Hardware Engineer with strong Python",
+        "D": "Entry level Board Level Test Engineer - Day Shift - Santa Clara, CA We are now open for entry level profiles, with strong expertise in Python and EE hardware. Please share BSEE/MSEE candidates only. Candidate must be open to attend 2 rounds of Python coding assessment. Key Responsibilities Other Industries Irving, TX",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11149721",
+      "company": "Presto",
+      "role": "AI Engineering Intern, Voice & LLM Systems",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "Presto",
+        "C": "AI Engineering Intern, Voice & LLM Systems",
+        "D": "Presto is the leading Voice AI company for restaurant drive-thrus, operating at scale in complex, noisy, customer-facing environments. As the AI partner to more than a dozen of the Elizabeth Sadek Head of People Operations Presto Internet & Software San Mateo, CA Ricardo Colin",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11177853",
+      "company": "MaroonGroup, Inc.",
+      "role": "Software Engineer Intern",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "MaroonGroup, Inc.",
+        "C": "Software Engineer Intern",
+        "D": "Software Engineer Intern \u2014 Maroon Location: Remote / HybridDuration: 5 weeks (5 Hours a Week)Type: Internship with potential conversion to 35$ an hour About Maroon Maroon is building a relationship-intelligence platform that helps people understand comp Internet & Software Miami, FL",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11195900",
+      "company": "Squoosh.AI",
+      "role": "Founding Engineer \u2014 AI Systems & Product",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 17,
+      "sheet_row": {
+        "A": "",
+        "B": "Squoosh.AI",
+        "C": "Founding Engineer \u2014 AI Systems & Product",
+        "D": "What we\u2019re building We\u2019re building a system that helps ecommerce companies improve their websites dramatically faster. The product takes a site, creates a safe sandbox, generates conversion experiments, and sends AI-powered synthetic shoppers through each version. It then helps determine which c",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-10845319",
+      "company": "Matthews International",
+      "role": "Electrical Engineering Coop - Fall 2026",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "Matthews International",
+        "C": "Electrical Engineering Coop - Fall 2026",
+        "D": "In the Electrical Engineering Department at Matthews Automation (A Duravent Company) - Reporting to the Director of Engineering / Lead Electrical Engineer. Onsite internship. Location: Matthews Automation 10200 Alliance Drive Manufacturing Two NorthShore Center, Pittsburgh, Pennsylvania, United States",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11202916",
+      "company": "AMPSSolar",
+      "role": "Photovoltaic Electrical Engineer University Student",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "AMPSSolar",
+        "C": "Photovoltaic Electrical Engineer University Student",
+        "D": "AMPS Solar is seeking a motivated and career-driven university student or recent graduate pursuing a degree in Electrical Engineering to join our growing engineering team as a Photovoltaic (PV) Electrical Engineer. This position is designed to provide hands-on experience in the design, development, installation, and optimization of commercial and utility-scale solar photovoltaic systems. This is an excellent opportunity for someone looking to build a long-term career in the renew JOANNA MONTES Solar Photovoltaic Electrician AMPSSolar Manufacturing Oak Hills, CA",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11138633",
+      "company": "Peritus Inc",
+      "role": "Entry Level Hardware Engineer- Python Coding",
+      "sheet_name": "Applied",
+      "status": "Checkin/Review",
+      "decision": "skip",
+      "score": 17,
+      "sheet_row": {
+        "A": "",
+        "B": "Peritus Inc",
+        "C": "Entry Level Hardware Engineer- Python Coding",
+        "D": "Key Responsibilities\u2022 Perform first-level hardware triage and troubleshooting for PCs and server platforms.\u2022 Design and implement diagnostic tools and scripts for early hardware validation and fault isolation.\u2022 Identify and resolve setup issues and test failures using structured troubleshooting methodologies. Other Industries Irving, TX",
+        "E": "",
+        "F": "Checkin/Review"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    },
+    {
+      "job_id": "handshake-11177861",
+      "company": "MaroonGroup, Inc.",
+      "role": "AI & Product Testing Intern",
+      "sheet_name": "Applied",
+      "status": "applied",
+      "decision": "auto_apply",
+      "score": 65,
+      "sheet_row": {
+        "A": "2026-07-14",
+        "B": "MaroonGroup, Inc.",
+        "C": "AI & Product Testing Intern",
+        "D": "AI & Product Testing Intern \u2014 Maroon Location: Remote / HybridDuration: 5 weeks (5 Hours a Week)Type: Internship with potential conversion to 35$ About Maroon Maroon is building a relationship-intelligence platform that uses psychology, behavioral dat Internet & Software Miami, FL",
+        "E": "",
+        "F": "applied"
+      },
+      "synced_at": "2026-07-15T04:10:11+00:00"
+    }
+  ]
+}

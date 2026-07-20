@@ -1,0 +1,99 @@
+{
+  "jobs": [
+    {
+      "id": "hs-internal-2",
+      "title": "Robotics Software Intern",
+      "company": "Internal Robotics",
+      "location": "San Francisco, CA",
+      "url": "https://sfsu.joinhandshake.com/jobs/1",
+      "description": "Robotics intern using Python, C++, Linux, sensors, testing, embedded systems, and mechatronics.",
+      "source": "handshake_live",
+      "application_method": "internal",
+      "application_url": "",
+      "requires_cover_letter": false,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 89,
+      "decision": "auto_apply",
+      "status": "queued",
+      "created_at": "2026-07-14T01:34:11+00:00",
+      "updated_at": "2026-07-14T01:34:11+00:00"
+    },
+    {
+      "id": "hs-external-2",
+      "title": "Robotics Controls Intern",
+      "company": "External Robotics",
+      "location": "San Jose, CA",
+      "url": "https://sfsu.joinhandshake.com/jobs/2",
+      "description": "Controls and robotics internship with Linux, Python, testing, and manipulators.",
+      "source": "handshake_live",
+      "application_method": "external",
+      "application_url": "",
+      "requires_cover_letter": false,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 83,
+      "decision": "auto_apply",
+      "status": "Checkin/Review",
+      "created_at": "2026-07-14T01:34:11+00:00",
+      "updated_at": "2026-07-14T01:34:11+00:00"
+    },
+    {
+      "id": "smoke-internal",
+      "title": "Robotics Software Intern",
+      "company": "Test Robotics",
+      "location": "San Francisco, CA",
+      "url": "https://example.com/job",
+      "description": "Python ROS embedded robotics internship.",
+      "source": "handshake",
+      "application_method": "internal",
+      "application_url": "",
+      "requires_cover_letter": false,
+      "requires_transcript": true,
+      "requires_resume": true,
+      "score": 80,
+      "decision": "auto_apply",
+      "status": "queued",
+      "created_at": "2026-07-14T01:45:45+00:00",
+      "updated_at": "2026-07-14T01:45:45+00:00"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "run-0001",
+      "created_at": "2026-07-14T01:34:11+00:00",
+      "jobs_seen": 1,
+      "jobs_written": 1,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    },
+    {
+      "run_id": "run-0002",
+      "created_at": "2026-07-14T01:34:11+00:00",
+      "jobs_seen": 1,
+      "jobs_written": 1,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    },
+    {
+      "run_id": "run-0003",
+      "created_at": "2026-07-14T01:34:11+00:00",
+      "jobs_seen": 1,
+      "jobs_written": 1,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    },
+    {
+      "run_id": "run-0004",
+      "created_at": "2026-07-14T01:45:45+00:00",
+      "jobs_seen": 1,
+      "jobs_written": 1,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    }
+  ]
+}

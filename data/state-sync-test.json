@@ -1,0 +1,81 @@
+{
+  "jobs": [
+    {
+      "id": "robotics-intern-001",
+      "title": "Robotics Software Intern",
+      "company": "North Star Robotics",
+      "location": "San Francisco, CA",
+      "url": "https://example.com/robotics-intern-001",
+      "description": "Join our robotics software team to build software for manipulators and mobile robots. Requirements include Python, C++, Linux, sensors, debugging, system integration, and hands-on testing with hardware. Experience with ROS, embedded systems, and mechatronics is preferred.",
+      "source": "manual",
+      "application_method": "external",
+      "application_url": "https://example.com/robotics-intern-001/apply",
+      "requires_cover_letter": false,
+      "requires_transcript": true,
+      "requires_resume": true,
+      "score": 89,
+      "decision": "auto_apply",
+      "status": "Checkin/Review",
+      "created_at": "2026-07-13T21:46:01+00:00",
+      "updated_at": "2026-07-13T21:47:06+00:00"
+    },
+    {
+      "id": "firmware-intern-002",
+      "title": "Firmware Engineering Intern",
+      "company": "Circuit Motion",
+      "location": "San Jose, CA",
+      "url": "https://example.com/firmware-intern-002",
+      "description": "Develop firmware for ARM microcontrollers using C. Work with schematics, lab debugging tools, serial interfaces, and bring-up. Familiarity with PCB design, sensors, and embedded testing is a plus.",
+      "source": "manual",
+      "application_method": "internal",
+      "application_url": "https://example.com/firmware-intern-002/apply",
+      "requires_cover_letter": false,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 67,
+      "decision": "auto_apply",
+      "status": "queued",
+      "created_at": "2026-07-13T21:46:01+00:00",
+      "updated_at": "2026-07-13T21:47:06+00:00"
+    },
+    {
+      "id": "backend-intern-003",
+      "title": "Backend Platform Intern",
+      "company": "Cloud Ledger",
+      "location": "Remote",
+      "url": "https://example.com/backend-intern-003",
+      "description": "Build backend APIs using Java, distributed systems, cloud services, Kubernetes, and SQL. Robotics experience is not required.",
+      "source": "manual",
+      "application_method": "external",
+      "application_url": "https://example.com/backend-intern-003/apply",
+      "requires_cover_letter": true,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 20,
+      "decision": "skip",
+      "status": "Checkin/Review",
+      "created_at": "2026-07-13T21:46:01+00:00",
+      "updated_at": "2026-07-13T21:47:06+00:00"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "run-0001",
+      "created_at": "2026-07-13T21:46:01+00:00",
+      "jobs_seen": 3,
+      "jobs_written": 3,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    },
+    {
+      "run_id": "run-0002",
+      "created_at": "2026-07-13T21:47:06+00:00",
+      "jobs_seen": 3,
+      "jobs_written": 3,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    }
+  ]
+}

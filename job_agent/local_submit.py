@@ -17,49 +17,52 @@ from .tracking import build_sheet_row_map, build_tracking_row
 from .tracking_sync import sync_tracking_rows
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Submit queued Handshake jobs using a local signed-in browser profile.")
-    parser.add_argument("--profile", default="profile.json", help="Path to the candidate profile JSON file.")
-    parser.add_argument("--state", default="data/state.json", help="Path to the local state JSON file.")
-    parser.add_argument("--limit", type=int, default=15, help="Maximum queued Handshake jobs to attempt in one run.")
-    parser.add_argument(
-        "--user-data-dir",
-        default="data/handshake_browser_profile",
-        help="Persistent browser profile directory for the local Handshake session.",
+def is_handshake_hosted_job(stored) -> bool:
+    url = str(getattr(stored, "url", "") or "").lower()
+    application_url = str(getattr(stored, "application_url", "") or "").lower()
+    source = str(getattr(stored, "source", "") or "").lower()
+    return (
+        "joinhandshake.com" in url
+        or "joinhandshake.com" in application_url
+        or source.startswith("handshake")
     )
-    parser.add_argument(
-        "--headless",
-        action="store_true",
-        help="Run the local Chromium session headlessly after you have already logged in once.",
-    )
-    parser.add_argument(
-        "--login-only",
-        action="store_true",
-        help="Open the persistent local browser profile just for Handshake sign-in bootstrap, without attempting submissions.",
-    )
-    args = parser.parse_args()
 
-    base_dir = Path(__file__).resolve().parent.parent
-    profile = load_profile(base_dir / args.profile)
-    state_store = JsonStateStore(base_dir / args.state)
+
+def process_local_queue(
+    *,
+    base_dir: Path,
+    profile_path: str = "profile.json",
+    state_path: str = "data/state.json",
+    limit: int = 15,
+    user_data_dir: str = "data/handshake_browser_profile",
+    headless: bool = False,
+    login_only: bool = False,
+) -> dict:
+    profile = load_profile(base_dir / profile_path)
+    state_store = JsonStateStore(base_dir / state_path)
     state = state_store.load()
 
     queued_jobs = [
         stored
         for stored in state.jobs
-        if stored.status == "queued" and stored.application_method == "internal"
-    ][: max(0, args.limit)]
+        if stored.status == "queued"
+        and is_handshake_hosted_job(stored)
+        and stored.application_method != "external"
+    ][: max(0, limit)]
 
     if not queued_jobs:
-        print(json.dumps({"queued_jobs": 0, "attempted_jobs": 0, "message": "No queued internal Handshake jobs found."}, indent=2))
-        return
+        return {
+            "queued_jobs": 0,
+            "attempted_jobs": 0,
+            "message": "No queued Handshake-hosted jobs found that are safe to attempt locally.",
+        }
 
     results = run_local_handshake_submit(
         base_dir=base_dir,
         jobs=[stored_job_to_payload(job) for job in queued_jobs],
-        user_data_dir=base_dir / args.user_data_dir,
-        headless=args.headless,
-        login_only=args.login_only,
+        user_data_dir=base_dir / user_data_dir,
+        headless=headless,
+        login_only=login_only,
     )
 
     processed_rows = []
@@ -126,6 +129,41 @@ def main() -> None:
         "results": processed_rows,
     }
     payload["tracking_sync"] = sync_tracking_rows(payload)
+    return payload
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Submit queued Handshake jobs using a local signed-in browser profile.")
+    parser.add_argument("--profile", default="profile.json", help="Path to the candidate profile JSON file.")
+    parser.add_argument("--state", default="data/state.json", help="Path to the local state JSON file.")
+    parser.add_argument("--limit", type=int, default=15, help="Maximum queued Handshake jobs to attempt in one run.")
+    parser.add_argument(
+        "--user-data-dir",
+        default="data/handshake_browser_profile",
+        help="Persistent browser profile directory for the local Handshake session.",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run the local Chromium session headlessly after you have already logged in once.",
+    )
+    parser.add_argument(
+        "--login-only",
+        action="store_true",
+        help="Open the persistent local browser profile just for Handshake sign-in bootstrap, without attempting submissions.",
+    )
+    args = parser.parse_args()
+
+    base_dir = Path(__file__).resolve().parent.parent
+    payload = process_local_queue(
+        base_dir=base_dir,
+        profile_path=args.profile,
+        state_path=args.state,
+        limit=args.limit,
+        user_data_dir=args.user_data_dir,
+        headless=args.headless,
+        login_only=args.login_only,
+    )
     print(json.dumps(payload, indent=2))
 
 

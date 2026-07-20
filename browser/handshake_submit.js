@@ -43,6 +43,20 @@ function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function textLooksLikeVisibleSubmit(value) {
+  const text = normalizeText(value).toLowerCase();
+  if (!text) {
+    return false;
+  }
+  return (
+    text === "submit" ||
+    text === "submit application" ||
+    text === "submit your application" ||
+    text === "apply now" ||
+    text === "send application"
+  );
+}
+
 async function loadPlaywright() {
   const explicitImport = normalizeText(process.env.JOB_AGENT_PLAYWRIGHT_IMPORT || "");
   if (explicitImport) {
@@ -120,17 +134,97 @@ async function clickVisibleButton(page, name) {
   return false;
 }
 
+async function clickVisibleButtonByPattern(page, pattern) {
+  const buttons = page.getByRole("button", { name: pattern });
+  const count = await buttons.count();
+  for (let index = 0; index < count; index += 1) {
+    const candidate = buttons.nth(index);
+    if (await candidate.isVisible()) {
+      await candidate.click({ force: true, timeout: 5000 });
+      return true;
+    }
+  }
+  return false;
+}
+
+async function waitForApplySurface(page) {
+  const deadline = Date.now() + 7000;
+  while (Date.now() < deadline) {
+    const dialogVisible = await page.locator('[role="dialog"]').first().isVisible().catch(() => false);
+    const submitVisible = await hasVisibleSubmitControl(page);
+    const externalVisible = await hasVisibleExternalApply(page);
+    if (dialogVisible || submitVisible || externalVisible) {
+      return true;
+    }
+    await page.waitForTimeout(400);
+  }
+  return false;
+}
+
+async function hasVisibleExternalApply(page) {
+  const externalControls = [
+    page.getByRole("button", { name: /Apply externally/i }),
+    page.getByRole("link", { name: /Apply externally/i }),
+    page.getByText(/View application/i),
+  ];
+  for (const locator of externalControls) {
+    const count = await locator.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      if (await locator.nth(index).isVisible().catch(() => false)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+async function findVisibleSubmitControl(page) {
+  const buttonPatterns = [/Submit Application/i, /Submit Your Application/i, /^Submit$/i, /Apply Now/i];
+  for (const pattern of buttonPatterns) {
+    const locator = page.getByRole("button", { name: pattern });
+    const count = await locator.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      const candidate = locator.nth(index);
+      if (await candidate.isVisible().catch(() => false)) {
+        return candidate;
+      }
+    }
+  }
+
+  const submitInputs = page.locator('input[type="submit"], button[type="submit"], [data-testid*="submit"]');
+  const controlCount = await submitInputs.count().catch(() => 0);
+  for (let index = 0; index < controlCount; index += 1) {
+    const candidate = submitInputs.nth(index);
+    if (!(await candidate.isVisible().catch(() => false))) {
+      continue;
+    }
+    const text = normalizeText(await candidate.textContent().catch(() => ""));
+    const value = normalizeText(await candidate.getAttribute("value").catch(() => ""));
+    if (textLooksLikeVisibleSubmit(text) || textLooksLikeVisibleSubmit(value) || (!text && !value)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+async function hasVisibleSubmitControl(page) {
+  return (await findVisibleSubmitControl(page)) !== null;
+}
+
 async function captureModalState(page) {
+  const dialog = page.locator('[role="dialog"]').first();
+  const dialogText = normalizeText(await dialog.textContent().catch(() => ""));
   const bodyText = normalizeText(await page.locator("body").textContent());
+  const combinedText = normalizeText(`${dialogText} ${bodyText}`);
   return {
-    requiresResume: bodyText.includes("Attach your resume") || bodyText.includes("requires a resume"),
+    requiresResume: combinedText.includes("Attach your resume") || combinedText.includes("requires a resume"),
     requiresTranscript:
-      bodyText.includes("Attach your transcript") || bodyText.includes("requires a transcript"),
+      combinedText.includes("Attach your transcript") || combinedText.includes("requires a transcript"),
     requiresCoverLetter:
-      bodyText.includes("Attach your cover letter") || bodyText.includes("requires a cover letter"),
-    hasSubmitButton:
-      (await page.getByRole("button", { name: /Submit Application/i }).count()) > 0,
-    bodyText,
+      combinedText.includes("Attach your cover letter") || combinedText.includes("requires a cover letter"),
+    hasSubmitButton: await hasVisibleSubmitControl(page),
+    bodyText: combinedText,
   };
 }
 
@@ -147,7 +241,7 @@ async function submitHandshakeJob(page, job) {
     };
   }
 
-  const externalApply = await clickVisibleButton(page, "Apply externally");
+  const externalApply = await clickVisibleButtonByPattern(page, /Apply externally/i);
   if (externalApply) {
     return {
       job_id: job.id,
@@ -158,7 +252,10 @@ async function submitHandshakeJob(page, job) {
     };
   }
 
-  const applyClicked = await clickVisibleButton(page, "Apply");
+  const applyClicked =
+    (await clickVisibleButtonByPattern(page, /^Apply$/i)) ||
+    (await clickVisibleButtonByPattern(page, /^Easy Apply$/i)) ||
+    (await clickVisibleButtonByPattern(page, /^Quick Apply$/i));
   if (!applyClicked) {
     return {
       job_id: job.id,
@@ -169,8 +266,18 @@ async function submitHandshakeJob(page, job) {
     };
   }
 
-  await page.waitForTimeout(1200);
+  await waitForApplySurface(page);
   const modalState = await captureModalState(page);
+
+  if (await hasVisibleExternalApply(page)) {
+    return {
+      job_id: job.id,
+      attempted: true,
+      submitted: false,
+      status: "external_review_required",
+      notes: ["The job opened an external or already-started application flow and should stay in Checkin/Review."],
+    };
+  }
 
   if (modalState.requiresCoverLetter) {
     return {
@@ -202,15 +309,35 @@ async function submitHandshakeJob(page, job) {
     };
   }
 
-  await page.getByRole("button", { name: /Submit Application/i }).first().click({ force: true, timeout: 5000 });
-  await page.waitForTimeout(1600);
+  const submitControl = await findVisibleSubmitControl(page);
+  if (!submitControl) {
+    return {
+      job_id: job.id,
+      attempted: true,
+      submitted: false,
+      status: "submit_button_not_found",
+      notes: ["The application surface was visible, but no clickable submit control could be resolved."],
+    };
+  }
+
+  const beforeUrl = page.url();
+  const beforeBodyText = normalizeText(await page.locator("body").textContent()).toLowerCase();
+  await submitControl.click({ force: true, timeout: 5000 });
+  await page.waitForTimeout(2200);
 
   const bodyTextAfter = normalizeText(await page.locator("body").textContent()).toLowerCase();
-  const submitStillVisible = (await page.getByRole("button", { name: /Submit Application/i }).count()) > 0;
+  const submitStillVisible = await hasVisibleSubmitControl(page);
+  const currentUrl = page.url();
   const looksSubmitted =
     bodyTextAfter.includes("application submitted") ||
     bodyTextAfter.includes("you applied") ||
-    bodyTextAfter.includes("withdraw application");
+    bodyTextAfter.includes("withdraw application") ||
+    bodyTextAfter.includes("application complete") ||
+    bodyTextAfter.includes("application received") ||
+    bodyTextAfter.includes("you've already applied") ||
+    bodyTextAfter.includes("your application has been submitted") ||
+    (beforeUrl !== currentUrl && !currentUrl.toLowerCase().includes("/login")) ||
+    (beforeBodyText.includes("submit application") && !bodyTextAfter.includes("submit application"));
 
   return {
     job_id: job.id,

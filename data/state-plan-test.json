@@ -1,0 +1,53 @@
+{
+  "jobs": [
+    {
+      "id": "hs-internal-1",
+      "title": "Robotics Software Intern",
+      "company": "Internal Robotics",
+      "location": "San Francisco, CA",
+      "url": "https://sfsu.joinhandshake.com/jobs/1",
+      "description": "Robotics intern using Python, C++, Linux, sensors, testing, embedded systems, and mechatronics.",
+      "source": "handshake_live",
+      "application_method": "internal",
+      "application_url": "",
+      "requires_cover_letter": false,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 89,
+      "decision": "auto_apply",
+      "status": "queued",
+      "created_at": "2026-07-14T01:17:52+00:00",
+      "updated_at": "2026-07-14T01:17:52+00:00"
+    },
+    {
+      "id": "hs-external-1",
+      "title": "Robotics Controls Intern",
+      "company": "External Robotics",
+      "location": "San Jose, CA",
+      "url": "https://sfsu.joinhandshake.com/jobs/2",
+      "description": "Controls and robotics internship with Linux, Python, testing, and manipulators.",
+      "source": "handshake_live",
+      "application_method": "external",
+      "application_url": "",
+      "requires_cover_letter": false,
+      "requires_transcript": false,
+      "requires_resume": true,
+      "score": 83,
+      "decision": "auto_apply",
+      "status": "Checkin/Review",
+      "created_at": "2026-07-14T01:17:52+00:00",
+      "updated_at": "2026-07-14T01:17:52+00:00"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "run-0001",
+      "created_at": "2026-07-14T01:17:52+00:00",
+      "jobs_seen": 2,
+      "jobs_written": 2,
+      "notes": [
+        "Cloud run executed against imported jobs."
+      ]
+    }
+  ]
+}
