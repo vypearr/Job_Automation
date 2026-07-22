@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
+.venv/
+node_modules/
 data/state.json
 tracking_export.csv
 handshake_tracking.csv
@@ -7,3 +9,4 @@ handshake_selected_tracking.csv
 handshake_imported.json
 *.log
 data/handshake_browser_profile/
+data/ms-playwright/

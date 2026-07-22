@@ -18,7 +18,7 @@ export async function collectHandshakeSearchJobs(
     const url = `${origin}/job-search?page=${page}&per_page=${perPage}`;
     await tab.goto(url);
     await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 30000 });
-    await tab.playwright.waitForTimeout(1200);
+    await tab.playwright.waitForTimeout(5000);
 
     const jobs = await tab.playwright.evaluate(({ origin, page, perPage }) => {
       function normalizeText(value) {

@@ -117,7 +117,15 @@ async function waitForLoginCompletion(page, origin) {
 async function waitForUserClose(page) {
   process.stdout.write("Login bootstrap complete. Close the browser window when you're done verifying the session.\n");
   while (!page.isClosed()) {
-    await page.waitForTimeout(1000);
+    try {
+      await page.waitForTimeout(1000);
+    } catch (error) {
+      const message = normalizeText(error?.message || String(error)).toLowerCase();
+      if (page.isClosed() || message.includes("target page, context or browser has been closed")) {
+        break;
+      }
+      throw error;
+    }
   }
 }
 

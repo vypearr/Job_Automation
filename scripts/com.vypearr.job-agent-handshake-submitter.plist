@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vypearr.job-agent-handshake-submitter</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/tarunva/Job_Automation/scripts/run_scheduled_handshake_submitter.sh</string>
+    <string>25</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/tarunva/Job_Automation</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>23</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>StandardOutPath</key>
+  <string>/Users/tarunva/Job_Automation/data/logs/submitter-launchd.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/tarunva/Job_Automation/data/logs/submitter-launchd.stderr.log</string>
+</dict>
+</plist>

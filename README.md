@@ -159,6 +159,49 @@ By default this creates:
 
 Both tasks run the unattended local cycle with `submit limit 25`, so the system can keep processing Handshake-native jobs without you manually starting it each time.
 
+### macOS local runner
+
+On macOS, bootstrap the persistent Handshake login with:
+
+```bash
+scripts/bootstrap_handshake_login.sh
+```
+
+The native scheduled finder launcher is:
+
+```bash
+scripts/run_unattended_handshake_cycle.sh
+```
+
+Before scoring and submission, the unattended launcher now refreshes live Handshake
+intake with the saved browser profile. It collects three search-result pages, filters
+for target roles, and enriches up to 25 matches. The three intake files are replaced
+only after the complete refresh succeeds; otherwise the cycle continues with the
+last valid files and records a warning in its log.
+
+Handshake currently presents Cloudflare verification to headless Chromium, so live
+discovery defaults to a visible browser window. Set `JOB_AGENT_HANDSHAKE_HEADLESS=true`
+only if the account can load search results without that verification page.
+
+The scheduled cycle scores the enriched and targeted Handshake results (plus the
+existing LinkedIn live intake), rather than adding every broad Handshake search card
+to the tracking sheet.
+
+The macOS schedule is split into two stages:
+
+- 10:00 and 17:00: refresh live Handshake discovery, score jobs, queue decisions,
+  and update the tracking sheet without submitting applications
+- 23:00: process up to 25 already-queued Handshake roles, then perform a full-state
+  sheet sync
+
+The 23:00 submitter uses a visible browser because Handshake currently presents
+Cloudflare verification to headless Chromium.
+
+The included `scripts/com.vypearr.job-agent-handshake.plist` runs that launcher at
+10:00 and 17:00 local time. `launchd` coalesces a calendar event missed while the
+Mac is asleep and starts it after the Mac wakes. Install the plist in
+`~/Library/LaunchAgents` and bootstrap it into the current GUI session.
+
 Use the local queued-job runner to submit `queued` Handshake-hosted jobs from your machine:
 
 ```powershell

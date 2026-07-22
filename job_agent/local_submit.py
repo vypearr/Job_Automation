@@ -223,6 +223,7 @@ def detect_node_modules(node_executable: Path) -> Path | None:
             return configured_path
 
     candidates = [
+        Path.cwd() / "node_modules",
         node_executable.parent.parent / "node_modules",
         node_executable.parent.parent.parent / "node_modules",
     ]
@@ -275,6 +276,9 @@ def detect_browser_executable() -> Path | None:
             return configured_path
 
     candidates = [
+        Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+        Path("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
+        Path("/Applications/Chromium.app/Contents/MacOS/Chromium"),
         Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
         Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
         Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),

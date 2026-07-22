@@ -1,5 +1,8 @@
 {
   "name": "robotics-job-agent",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
 }
