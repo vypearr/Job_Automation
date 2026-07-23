@@ -197,6 +197,18 @@ The macOS schedule is split into two stages:
 The 23:00 submitter uses a visible browser because Handshake currently presents
 Cloudflare verification to headless Chromium.
 
+Reliability behavior:
+
+- each Handshake search page is retried up to three times, and jobs from successful
+  pages are preserved when another page fails
+- sheet webhook updates are sent in batches of 25 rows to avoid long-request timeouts
+- confirmed internal Handshake jobs are attempted before unknown application methods
+- jobs already showing an applied state are reconciled without clicking Submit again
+- transcript-required applications first reuse an existing Handshake transcript and
+  can fall back to the ignored local transcript configured in `profile.json`
+- Render remains enabled as a temporary cloud-side intake and sheet-sync fallback
+  while the Mac finder is being proven reliable
+
 The included `scripts/com.vypearr.job-agent-handshake.plist` runs that launcher at
 10:00 and 17:00 local time. `launchd` coalesces a calendar event missed while the
 Mac is asleep and starts it after the Mac wakes. Install the plist in

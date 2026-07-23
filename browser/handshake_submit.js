@@ -7,6 +7,7 @@ function parseArgs(argv) {
     userDataDir: "",
     headless: false,
     loginOnly: false,
+    transcriptPath: "",
     origin: "https://app.joinhandshake.com",
   };
 
@@ -26,6 +27,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (value === "--login-only") {
       options.loginOnly = String(argv[index + 1] || "").toLowerCase() === "true";
+      index += 1;
+    } else if (value === "--transcript-path") {
+      options.transcriptPath = argv[index + 1] || "";
       index += 1;
     } else if (value === "--origin") {
       options.origin = argv[index + 1] || options.origin;
@@ -236,7 +240,131 @@ async function captureModalState(page) {
   };
 }
 
-async function submitHandshakeJob(page, job) {
+async function detectSubmittedState(page) {
+  const bodyText = normalizeText(await page.locator("body").textContent().catch(() => "")).toLowerCase();
+  const submittedSignals = [
+    "application submitted",
+    "you applied",
+    "withdraw application",
+    "you've already applied",
+    "your application has been submitted",
+  ];
+  return submittedSignals.some((signal) => bodyText.includes(signal));
+}
+
+async function submitControlIsEnabled(page) {
+  const control = await findVisibleSubmitControl(page);
+  if (!control) {
+    return false;
+  }
+  return control.isEnabled().catch(() => false);
+}
+
+async function selectExistingTranscript(page) {
+  const controls = page.locator('input[type="radio"], input[type="checkbox"]');
+  const count = await controls.count().catch(() => 0);
+  for (let index = 0; index < count; index += 1) {
+    const control = controls.nth(index);
+    const contextText = normalizeText(await control.evaluate((element) => {
+      const id = element.getAttribute("id");
+      const label = id ? document.querySelector(`label[for="${CSS.escape(id)}"]`) : null;
+      return label?.textContent || element.parentElement?.textContent || "";
+    }).catch(() => ""));
+    if (!/transcript/i.test(contextText)) {
+      continue;
+    }
+    await control.check({ force: true }).catch(() => {});
+    if (await submitControlIsEnabled(page)) {
+      return true;
+    }
+  }
+
+  const selects = page.locator("select");
+  const selectCount = await selects.count().catch(() => 0);
+  for (let index = 0; index < selectCount; index += 1) {
+    const select = selects.nth(index);
+    const transcriptOption = await select.evaluate((element) => {
+      const options = Array.from(element.options || []);
+      const match = options.find((option) => /transcript/i.test(String(option.textContent || "")) && option.value);
+      return match ? match.value : "";
+    }).catch(() => "");
+    if (!transcriptOption) {
+      continue;
+    }
+    await select.selectOption(transcriptOption).catch(() => {});
+    await page.waitForTimeout(500);
+    if (await submitControlIsEnabled(page)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function uploadTranscript(page, transcriptPath) {
+  if (!transcriptPath) {
+    return false;
+  }
+
+  const uploadButtons = [
+    page.getByRole("button", { name: /upload new/i }),
+    page.getByRole("button", { name: /upload transcript/i }),
+    page.getByRole("button", { name: /add transcript/i }),
+  ];
+  for (const buttons of uploadButtons) {
+    const count = await buttons.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      const button = buttons.nth(index);
+      if (!(await button.isVisible().catch(() => false))) {
+        continue;
+      }
+      try {
+        const [chooser] = await Promise.all([
+          page.waitForEvent("filechooser", { timeout: 5000 }),
+          button.click({ force: true, timeout: 5000 }),
+        ]);
+        await chooser.setFiles(transcriptPath);
+        await page.waitForTimeout(1200);
+        return true;
+      } catch {
+        // Some Handshake versions expose the file input directly after the button click.
+      }
+    }
+  }
+
+  const fileInputs = page.locator('input[type="file"]');
+  const inputCount = await fileInputs.count().catch(() => 0);
+  for (let index = 0; index < inputCount; index += 1) {
+    const input = fileInputs.nth(index);
+    const contextText = normalizeText(await input.evaluate((element) =>
+      element.parentElement?.parentElement?.textContent || element.parentElement?.textContent || ""
+    ).catch(() => ""));
+    if (inputCount > 1 && !/transcript/i.test(contextText)) {
+      continue;
+    }
+    await input.setInputFiles(transcriptPath).catch(() => {});
+    await page.waitForTimeout(1200);
+    if (await submitControlIsEnabled(page)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function ensureTranscriptAttached(page, transcriptPath) {
+  if (await submitControlIsEnabled(page)) {
+    return { attached: true, source: "existing" };
+  }
+  if (await selectExistingTranscript(page)) {
+    return { attached: true, source: "existing_selected" };
+  }
+  const uploaded = await uploadTranscript(page, transcriptPath);
+  if (uploaded && await submitControlIsEnabled(page)) {
+    return { attached: true, source: "uploaded" };
+  }
+  return { attached: false, source: transcriptPath ? "upload_failed" : "missing_local_transcript" };
+}
+
+async function submitHandshakeJob(page, job, transcriptPath) {
   await safeGoto(page, job.url);
 
   if (await isLoginRequired(page)) {
@@ -246,6 +374,16 @@ async function submitHandshakeJob(page, job) {
       submitted: false,
       status: "login_required",
       notes: ["Handshake login is required in the local browser profile before submissions can continue."],
+    };
+  }
+
+  if (await detectSubmittedState(page)) {
+    return {
+      job_id: job.id,
+      attempted: false,
+      submitted: true,
+      status: "already_submitted",
+      notes: ["Handshake already shows this application as submitted; local state was reconciled."],
     };
   }
 
@@ -298,13 +436,16 @@ async function submitHandshakeJob(page, job) {
   }
 
   if (modalState.requiresTranscript) {
-    return {
-      job_id: job.id,
-      attempted: true,
-      submitted: false,
-      status: "transcript_required",
-      notes: ["The application modal requires a transcript attachment and needs review."],
-    };
+    const transcript = await ensureTranscriptAttached(page, transcriptPath);
+    if (!transcript.attached) {
+      return {
+        job_id: job.id,
+        attempted: true,
+        submitted: false,
+        status: "transcript_required",
+        notes: [`The application requires a transcript, but attachment was not confirmed (${transcript.source}).`],
+      };
+    }
   }
 
   if (!modalState.hasSubmitButton) {
@@ -346,6 +487,19 @@ async function submitHandshakeJob(page, job) {
     bodyTextAfter.includes("your application has been submitted") ||
     (beforeUrl !== currentUrl && !currentUrl.toLowerCase().includes("/login")) ||
     (beforeBodyText.includes("submit application") && !bodyTextAfter.includes("submit application"));
+
+  if (!looksSubmitted && submitStillVisible) {
+    await safeGoto(page, job.url);
+    if (await detectSubmittedState(page)) {
+      return {
+        job_id: job.id,
+        attempted: true,
+        submitted: true,
+        status: "submitted",
+        notes: ["Submission was reconciled by revisiting the job and confirming Handshake's applied state."],
+      };
+    }
+  }
 
   return {
     job_id: job.id,
@@ -397,7 +551,7 @@ async function main() {
     }
 
     for (const job of jobs) {
-      results.push(await submitHandshakeJob(page, job));
+      results.push(await submitHandshakeJob(page, job, options.transcriptPath));
     }
   } finally {
     await fs.writeFile(options.outputPath, `${JSON.stringify(results, null, 2)}\n`, "utf8");

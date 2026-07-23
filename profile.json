@@ -85,7 +85,7 @@
   },
   "documents": {
     "resume_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Resume.pdf",
-    "transcript_path": "C:\\Users\\ttamb\\Downloads\\Tarun_Ambati_Transcript.pdf"
+    "transcript_path": "data/documents/Tarun_Ambati_Transcript.pdf"
   },
   "constraints": {
     "needs_sponsorship": false,

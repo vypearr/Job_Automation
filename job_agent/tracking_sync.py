@@ -15,6 +15,7 @@ class TrackingSyncConfig:
     webhook_url: str
     secret: str = ""
     timeout_seconds: int = 30
+    batch_size: int = 25
 
 
 def parse_tracking_sync_response(response_text: str) -> dict[str, Any]:
@@ -39,10 +40,17 @@ def load_tracking_sync_config() -> TrackingSyncConfig | None:
     except ValueError:
         timeout_seconds = 30
 
+    batch_size_raw = os.getenv("JOB_AGENT_TRACKING_BATCH_SIZE", "25").strip()
+    try:
+        batch_size = max(1, int(batch_size_raw))
+    except ValueError:
+        batch_size = 25
+
     return TrackingSyncConfig(
         webhook_url=webhook_url,
         secret=os.getenv("JOB_AGENT_TRACKING_WEBHOOK_SECRET", "").strip(),
         timeout_seconds=timeout_seconds,
+        batch_size=batch_size,
     )
 
 
@@ -77,12 +85,7 @@ def build_tracking_sync_payload(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None = None) -> dict[str, Any]:
-    config = config or load_tracking_sync_config()
-    if config is None:
-        return {"enabled": False, "synced": False, "reason": "tracking webhook not configured"}
-
-    payload = build_tracking_sync_payload(result)
+def _post_tracking_payload(payload: dict[str, Any], config: TrackingSyncConfig) -> dict[str, Any]:
     body = json.dumps(payload).encode("utf-8")
     webhook_url = config.webhook_url
     if config.secret:
@@ -99,7 +102,6 @@ def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None
             response_text = resp.read().decode("utf-8", errors="replace")
             parsed = parse_tracking_sync_response(response_text)
             return {
-                "enabled": True,
                 "synced": True,
                 "status_code": getattr(resp, "status", 200),
                 "response_text": response_text[:1000],
@@ -111,7 +113,6 @@ def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None
     except error.HTTPError as exc:
         response_text = exc.read().decode("utf-8", errors="replace")
         return {
-            "enabled": True,
             "synced": False,
             "status_code": exc.code,
             "error": response_text[:1000] or str(exc),
@@ -119,22 +120,70 @@ def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None
         }
     except error.URLError as exc:
         return {
-            "enabled": True,
             "synced": False,
             "error": str(exc.reason),
             "row_count": len(payload["rows"]),
         }
     except TimeoutError:
         return {
-            "enabled": True,
             "synced": False,
             "error": f"tracking webhook timed out after {config.timeout_seconds}s",
             "row_count": len(payload["rows"]),
         }
     except socket.timeout:
         return {
-            "enabled": True,
             "synced": False,
             "error": f"tracking webhook timed out after {config.timeout_seconds}s",
             "row_count": len(payload["rows"]),
         }
+
+
+def sync_tracking_rows(result: dict[str, Any], config: TrackingSyncConfig | None = None) -> dict[str, Any]:
+    config = config or load_tracking_sync_config()
+    if config is None:
+        return {"enabled": False, "synced": False, "reason": "tracking webhook not configured"}
+
+    payload = build_tracking_sync_payload(result)
+    rows = list(payload["rows"])
+    row_batches = [rows[index : index + config.batch_size] for index in range(0, len(rows), config.batch_size)]
+    if not row_batches:
+        row_batches = [[]]
+
+    batch_results: list[dict[str, Any]] = []
+    for batch_index, batch_rows in enumerate(row_batches, start=1):
+        batch_payload = dict(payload)
+        batch_payload["rows"] = batch_rows
+        batch_payload["jobs_seen"] = len(batch_rows)
+        batch_payload["jobs_written"] = len(batch_rows)
+        batch_payload["batch"] = {
+            "index": batch_index,
+            "count": len(row_batches),
+            "size": len(batch_rows),
+        }
+        batch_result = _post_tracking_payload(batch_payload, config)
+        batch_result["batch_index"] = batch_index
+        batch_results.append(batch_result)
+
+    synced = all(batch.get("synced", False) for batch in batch_results)
+    failures = [batch for batch in batch_results if not batch.get("synced", False)]
+    response: dict[str, Any] = {
+        "enabled": True,
+        "synced": synced,
+        "row_count": len(rows),
+        "batch_size": config.batch_size,
+        "batch_count": len(batch_results),
+        "successful_batch_count": len(batch_results) - len(failures),
+        "failed_batch_count": len(failures),
+        "appended": sum(int(batch.get("appended", 0) or 0) for batch in batch_results),
+        "updated": sum(int(batch.get("updated", 0) or 0) for batch in batch_results),
+        "processed": sum(int(batch.get("processed", 0) or 0) for batch in batch_results),
+        "batches": batch_results,
+    }
+    successful_statuses = [batch.get("status_code") for batch in batch_results if batch.get("status_code")]
+    if successful_statuses:
+        response["status_code"] = successful_statuses[-1]
+    if failures:
+        response["error"] = "; ".join(
+            f"batch {batch.get('batch_index')}: {batch.get('error', 'sync failed')}" for batch in failures
+        )
+    return response

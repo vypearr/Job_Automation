@@ -28,6 +28,29 @@ def is_handshake_hosted_job(stored) -> bool:
     )
 
 
+def queue_priority(stored) -> tuple[int, int, str]:
+    method = str(getattr(stored, "application_method", "") or "").strip().lower()
+    method_rank = 0 if method == "internal" else 1
+    return (method_rank, -int(getattr(stored, "score", 0) or 0), str(getattr(stored, "created_at", "")))
+
+
+def resolve_document_path(base_dir: Path, configured_path: str) -> Path | None:
+    cleaned = str(configured_path or "").strip()
+    if not cleaned:
+        return None
+
+    configured = Path(cleaned)
+    candidates = [configured]
+    if not configured.is_absolute():
+        candidates.insert(0, base_dir / configured)
+    candidates.append(base_dir / "data" / "documents" / configured.name)
+
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
 def process_local_queue(
     *,
     base_dir: Path,
@@ -42,13 +65,13 @@ def process_local_queue(
     state_store = JsonStateStore(base_dir / state_path)
     state = state_store.load()
 
-    queued_jobs = [
+    queued_jobs = sorted([
         stored
         for stored in state.jobs
         if stored.status == "queued"
         and is_handshake_hosted_job(stored)
         and stored.application_method != "external"
-    ][: max(0, limit)]
+    ], key=queue_priority)[: max(0, limit)]
 
     if not queued_jobs:
         return {
@@ -63,6 +86,7 @@ def process_local_queue(
         user_data_dir=base_dir / user_data_dir,
         headless=headless,
         login_only=login_only,
+        transcript_path=resolve_document_path(base_dir, profile.documents.get("transcript_path", "")),
     )
 
     processed_rows = []
@@ -72,7 +96,7 @@ def process_local_queue(
         if stored is None:
             continue
 
-        if result["status"] == "submitted" and result.get("submitted", False):
+        if result["status"] in {"submitted", "already_submitted"} and result.get("submitted", False):
             stored.status = str(profile.constraints.get("applied_status_value", "applied"))
             submitted_count += 1
             applied = True
@@ -124,6 +148,12 @@ def process_local_queue(
         "summary": {
             "submitted_count": submitted_count,
             "attempted_count": len(results),
+            "confirmed_internal_selected_count": sum(
+                1 for item in queued_jobs if str(item.application_method).strip().lower() == "internal"
+            ),
+            "unknown_method_selected_count": sum(
+                1 for item in queued_jobs if str(item.application_method).strip().lower() == "unknown"
+            ),
             "queued_remaining_count": sum(1 for item in state.jobs if item.status == "queued"),
         },
         "results": processed_rows,
@@ -297,6 +327,7 @@ def run_local_handshake_submit(
     user_data_dir: Path,
     headless: bool,
     login_only: bool,
+    transcript_path: Path | None,
 ) -> list[dict]:
     node_executable = detect_node_executable()
     node_modules = detect_node_modules(node_executable)
@@ -331,6 +362,8 @@ def run_local_handshake_submit(
             "--login-only",
             "true" if login_only else "false",
         ]
+        if transcript_path:
+            command.extend(["--transcript-path", str(transcript_path)])
         completed = subprocess.run(
             command,
             cwd=str(base_dir),

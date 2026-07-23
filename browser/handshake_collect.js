@@ -12,12 +12,33 @@ export async function collectHandshakeSearchJobs(
 ) {
   const collected = [];
   const seen = new Set();
+  const pageFailures = [];
 
   for (let offset = 0; offset < pages; offset += 1) {
     const page = startPage + offset;
     const url = `${origin}/job-search?page=${page}&per_page=${perPage}`;
-    await tab.goto(url);
-    await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 30000 });
+    let loaded = false;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        await tab.goto(url);
+        await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 30000 });
+        loaded = true;
+        break;
+      } catch (error) {
+        lastError = error;
+        process.stderr.write(
+          `Handshake page ${page} load attempt ${attempt}/3 failed: ${String(error?.message || error)}\n`,
+        );
+        if (attempt < 3) {
+          await tab.playwright.waitForTimeout(attempt * 1500);
+        }
+      }
+    }
+    if (!loaded) {
+      pageFailures.push({ page, error: String(lastError?.message || lastError || "page load failed") });
+      continue;
+    }
     await tab.playwright.waitForTimeout(5000);
 
     const jobs = await tab.playwright.evaluate(({ origin, page, perPage }) => {
@@ -133,6 +154,12 @@ export async function collectHandshakeSearchJobs(
       seen.add(job.id);
       collected.push(job);
     }
+  }
+
+  if (pageFailures.length > 0) {
+    process.stderr.write(
+      `Handshake collection preserved ${collected.length} jobs while skipping failed pages: ${JSON.stringify(pageFailures)}\n`,
+    );
   }
 
   if (outputPath) {

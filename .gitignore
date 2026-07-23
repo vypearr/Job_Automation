@@ -10,3 +10,4 @@ handshake_imported.json
 *.log
 data/handshake_browser_profile/
 data/ms-playwright/
+data/documents/
